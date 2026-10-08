@@ -1,0 +1,71 @@
+/* A compact application rail leaves the page itself as the main workspace. */
+@media (min-width: 768px) {
+  .portal-shell .desktop-sidebar {
+    width: 13.75rem !important;
+    padding: 0.5rem 0.35rem 1rem !important;
+  }
+
+  .portal-shell .layout-content-frame {
+    margin-left: 13.75rem !important;
+  }
+
+  .portal-shell .desktop-sidebar nav {
+    padding: 0.5rem !important;
+  }
+
+  .portal-shell .desktop-sidebar .sidebar-profile-card {
+    margin-bottom: 0.2rem !important;
+    padding: 0.25rem 0.35rem !important;
+  }
+
+  .portal-shell .desktop-sidebar .sidebar-profile-link {
+    gap: 0.55rem !important;
+    padding: 0.55rem 0.45rem !important;
+  }
+
+  .portal-shell .desktop-sidebar .sidebar-profile-link > div:last-child > div:last-child {
+    display: none;
+  }
+
+  .portal-shell .desktop-sidebar .sidebar-nav-link {
+    min-height: 2.7rem !important;
+    gap: 0.55rem !important;
+    margin: 0.05rem 0 !important;
+    padding: 0.5rem 0.55rem !important;
+    font-size: 0.84rem !important;
+  }
+
+  .portal-shell .desktop-sidebar .sidebar-nav-link > div {
+    width: 1.85rem !important;
+    height: 1.85rem !important;
+  }
+
+  /* Dashboard alone gets a reading-mode header: it leaves on a deep scroll
+     and comes back at the top, without changing any other route. */
+  .portal-shell .desktop-topbar,
+  .portal-shell .desktop-sidebar,
+  .portal-shell .layout-content-frame {
+    transition: transform 190ms ease, top 190ms ease, padding-top 190ms ease;
+  }
+
+  .portal-shell--dashboard-header-hidden .desktop-topbar {
+    pointer-events: none;
+    transform: translateY(-100%);
+  }
+
+  .portal-shell--dashboard-header-hidden .desktop-sidebar {
+    top: 0 !important;
+  }
+
+  .portal-shell--dashboard-header-hidden .layout-content-frame {
+    padding-top: 0 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal-shell .desktop-topbar,
+  .portal-shell .desktop-sidebar,
+  .portal-shell .layout-content-frame {
+    transition: none;
+  }
+}

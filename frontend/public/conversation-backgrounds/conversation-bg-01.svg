@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="760" viewBox="0 0 420 760" role="img" aria-label="Neon doodle chat wallpaper">
+  <rect width="420" height="760" fill="#272b2f"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g stroke="#5eead4" stroke-width="3" opacity=".72">
+      <path d="M-18 92c42-16 73-9 92 22 24 39 61 47 112 24"/>
+      <path d="M296 32c34 5 57 22 69 50 10 24 30 38 61 43"/>
+      <path d="M18 452c50-19 92-9 126 31 24 29 60 34 109 16"/>
+      <path d="M286 652c36-9 64-2 83 21 16 19 39 27 70 23"/>
+    </g>
+    <g stroke="#38bdf8" stroke-width="4" opacity=".9">
+      <path d="M242 272c30 16 58 16 87 0"/>
+      <path d="M260 300c18 9 35 9 52 0"/>
+      <path d="M278 328c7 4 14 4 21 0"/>
+      <circle cx="289" cy="352" r="5"/>
+      <path d="M70 610h52"/>
+      <path d="M78 636c11 13 26 20 43 20s32-7 43-20"/>
+      <path d="M88 584c18-14 38-21 60-21 23 0 43 7 60 21"/>
+    </g>
+    <g stroke="#60a5fa" stroke-width="3" opacity=".86">
+      <circle cx="72" cy="58" r="23"/>
+      <path d="M54 58h36"/>
+      <path d="M72 35c8 8 12 16 12 23s-4 15-12 23"/>
+      <path d="M72 35c-8 8-12 16-12 23s4 15 12 23"/>
+      <path d="M142 110l20-34 20 34z"/>
+      <path d="M335 127l23-28 23 28 23-28"/>
+      <path d="M313 410h43m-21-21v43"/>
+      <path d="M30 702l32-17 32 17"/>
+    </g>
+    <g stroke="#22d3ee" stroke-width="4" opacity=".9">
+      <circle cx="214" cy="176" r="17"/>
+      <circle cx="183" cy="196" r="14"/>
+      <circle cx="245" cy="196" r="14"/>
+      <circle cx="196" cy="225" r="18"/>
+      <circle cx="232" cy="225" r="18"/>
+      <path d="M179 247c21 17 50 17 71 0"/>
+      <path d="M92 318c17 1 31 14 32 31 1 23-19 39-43 31-10 11-30 10-38-4-12-2-22-13-21-26 1-15 13-25 27-25 8-10 22-14 43-7z"/>
+      <path d="M78 337c8 9 18 14 31 14"/>
+      <path d="M60 363h35"/>
+    </g>
+    <g stroke="#3b82f6" stroke-width="3" opacity=".78">
+      <circle cx="332" cy="226" r="24"/>
+      <path d="M332 187v78"/>
+      <path d="M293 226h78"/>
+      <path d="M312 207c13 13 27 13 40 0"/>
+      <path d="M312 245c13-13 27-13 40 0"/>
+      <path d="M24 204h44m-22-22v44"/>
+      <path d="M348 548h52m-26-26v52"/>
+      <path d="M42 512c24-8 46-5 67 8"/>
+    </g>
+    <g stroke="#93c5fd" stroke-width="3" opacity=".72">
+      <path d="M152 376c43 8 72 31 87 68"/>
+      <path d="M142 430c38-3 70 8 96 34"/>
+      <path d="M158 482c25-12 52-11 82 4"/>
+      <path d="M304 90c13 13 31 13 44 0"/>
+      <path d="M334 70v40"/>
+      <circle cx="356" cy="620" r="30"/>
+      <circle cx="356" cy="620" r="15"/>
+    </g>
+  </g>
+  <g fill="#38bdf8" font-family="Arial, Helvetica, sans-serif" font-weight="800" opacity=".88">
+    <text x="86" y="168" font-size="38" transform="rotate(8 86 168)">HUE</text>
+    <text x="66" y="426" font-size="42" transform="rotate(-4 66 426)">SiO2</text>
+    <text x="278" y="514" font-size="30" transform="rotate(11 278 514)">404</text>
+  </g>
+  <g fill="none" stroke="#67e8f9" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" opacity=".65">
+    <path d="M22 24l19 19m0-19L22 43"/>
+    <path d="M188 42l13 13m0-13-13 13"/>
+    <path d="M362 318l15 15m0-15-15 15"/>
+    <path d="M126 708l15 15m0-15-15 15"/>
+    <circle cx="32" cy="296" r="9"/>
+    <circle cx="292" cy="170" r="8"/>
+    <circle cx="376" cy="268" r="10"/>
+    <circle cx="174" cy="590" r="9"/>
+  </g>
+</svg>

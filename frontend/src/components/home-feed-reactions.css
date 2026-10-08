@@ -1,0 +1,101 @@
+/* Compact, anchored reaction controls used by HomeFeed only. */
+.home-feed .feed-reaction-picker,
+.mobile-reaction-tray.mobile-reaction-tray--anchored .feed-reaction-picker {
+  box-sizing: border-box;
+  display: inline-flex;
+  width: max-content !important;
+  min-width: 0 !important;
+  max-width: min(21.75rem, calc(100vw - 1rem)) !important;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.1rem !important;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  border-color: rgba(203, 213, 225, 0.96) !important;
+  border-radius: 9999px !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  padding: 0.25rem !important;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(255, 255, 255, 0.9) inset !important;
+  scrollbar-width: none;
+}
+
+.home-feed .feed-reaction-picker::-webkit-scrollbar,
+.mobile-reaction-tray.mobile-reaction-tray--anchored .feed-reaction-picker::-webkit-scrollbar {
+  display: none;
+}
+
+.home-feed .feed-reaction-picker .emoji-pop-button,
+.mobile-reaction-tray.mobile-reaction-tray--anchored .feed-reaction-picker .emoji-pop-button {
+  width: 2.45rem !important;
+  height: 2.45rem !important;
+  flex: 0 0 2.45rem;
+  border-radius: 9999px;
+  font-size: 1.32rem !important;
+  line-height: 1;
+}
+
+.home-feed .feed-reaction-picker-shell,
+.home-feed .comment-reaction-picker-shell {
+  width: max-content;
+  max-width: calc(100vw - 1rem);
+  transform: translateY(0.35rem) scale(0.98);
+  transform-origin: bottom left;
+  transition: opacity 140ms ease, transform 160ms cubic-bezier(.2, .85, .25, 1) !important;
+}
+
+.home-feed .feed-card-actions > div:hover > .feed-reaction-picker-shell,
+.home-feed .feed-card-actions > div:focus-within > .feed-reaction-picker-shell,
+.home-feed .comment-reactions-control:hover > .comment-reaction-picker-shell,
+.home-feed .comment-reactions-control:focus-within > .comment-reaction-picker-shell,
+.home-feed .comment-reactions-control.is-reaction-picker-open > .comment-reaction-picker-shell {
+  pointer-events: auto;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.home-feed .feed-card-actions > div:hover > .feed-reaction-picker-shell,
+.home-feed .feed-card-actions > div:focus-within > .feed-reaction-picker-shell {
+  z-index: 40;
+}
+
+.home-feed .feed-reaction-picker .emoji-pop-button:hover,
+.home-feed .feed-reaction-picker .emoji-pop-button:focus-visible,
+.mobile-reaction-tray.mobile-reaction-tray--anchored .feed-reaction-picker .emoji-pop-button:hover,
+.mobile-reaction-tray.mobile-reaction-tray--anchored .feed-reaction-picker .emoji-pop-button:focus-visible {
+  background: #eff6ff !important;
+  outline: none;
+}
+
+.mobile-reaction-tray.mobile-reaction-tray--anchored {
+  right: auto !important;
+  bottom: auto !important;
+  width: max-content !important;
+  max-width: calc(100vw - 1rem) !important;
+  justify-content: flex-start !important;
+  transform: translateY(-100%);
+  transform-origin: bottom center;
+}
+
+.mobile-reaction-tray.mobile-reaction-tray--anchored.mobile-reaction-tray--below {
+  transform: none;
+  transform-origin: top center;
+}
+
+@media (max-width: 390px) {
+  .home-feed .feed-reaction-picker .emoji-pop-button,
+  .mobile-reaction-tray.mobile-reaction-tray--anchored .feed-reaction-picker .emoji-pop-button {
+    width: 2.3rem !important;
+    height: 2.3rem !important;
+    flex-basis: 2.3rem;
+    font-size: 1.22rem !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-feed .feed-reaction-picker-shell,
+  .home-feed .comment-reaction-picker-shell,
+  .mobile-reaction-tray.mobile-reaction-tray--anchored {
+    animation: none !important;
+    transition: none !important;
+  }
+}

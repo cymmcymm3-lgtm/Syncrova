@@ -1,0 +1,470 @@
+/*
+ * The message route has its own, deliberately quiet visual layer.  It stays
+ * scoped to Messages so shared layout, profile, and feed surfaces are not
+ * affected by the Messenger-style inbox.
+ */
+.messages-clean-shell {
+  --messages-clean-blue: #1877f2;
+  --messages-clean-blue-dark: #0f63d5;
+  --messages-clean-line: #e5ebf3;
+  --messages-clean-muted: #667085;
+  border-color: #dce5f0 !important;
+  background: #ffffff !important;
+  box-shadow: 0 14px 36px rgba(37, 99, 235, 0.08) !important;
+}
+
+.messages-clean-shell .messages-clean-layout {
+  background: #ffffff;
+}
+
+/* The inbox and a thread are separate, full-width views.  A selected chat
+ * should never leave a narrow desktop column beside it. */
+.messages-pro-shell.messages-clean-shell.mobile-messenger-shell.is-conversation-open .messages-clean-list {
+  display: none !important;
+}
+
+.messages-pro-shell.messages-clean-shell.mobile-messenger-shell:not(.is-conversation-open) .messages-clean-list {
+  width: 100% !important;
+  max-width: none !important;
+  flex: 1 1 auto !important;
+  border-right: 0 !important;
+}
+
+.messages-clean-shell:not(.is-conversation-open) .messages-clean-empty-state {
+  display: none !important;
+}
+
+.messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-full-conversation-panel {
+  width: 100%;
+  flex: 1 1 auto !important;
+}
+
+.messages-clean-shell .messages-conversation-back {
+  width: auto !important;
+  min-width: 2.5rem;
+  gap: 0.35rem;
+  padding: 0.45rem 0.65rem !important;
+  border: 1px solid transparent;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.messages-clean-shell .messages-conversation-back:hover {
+  border-color: #d7e7ff;
+  color: var(--messages-clean-blue);
+}
+
+.messages-clean-shell .messages-conversation-back:focus-visible {
+  outline: 3px solid rgba(24, 119, 242, 0.24);
+  outline-offset: 2px;
+}
+
+.messages-clean-shell .messages-conversation-back-label {
+  white-space: nowrap;
+}
+
+/* Layout already owns the app navigation. A second in-message rail only
+ * takes room away from the conversation at wide desktop widths. */
+.messages-clean-shell .messages-tools-rail {
+  display: none !important;
+}
+
+.messages-clean-shell .messages-clean-list {
+  border-color: var(--messages-clean-line) !important;
+  background: #ffffff !important;
+}
+
+.messages-clean-shell .messages-clean-list-header {
+  border-color: var(--messages-clean-line) !important;
+  background: #ffffff !important;
+}
+
+.messages-clean-shell .messages-clean-list-title h2 {
+  letter-spacing: -0.035em;
+}
+
+.messages-clean-shell .messages-clean-list-title p {
+  color: var(--messages-clean-muted);
+}
+
+.messages-clean-shell .messages-search-input {
+  min-height: 2.75rem;
+  border-color: #e2e8f0 !important;
+  border-radius: 0.9rem !important;
+  background: #f6f8fb !important;
+  color: #182230;
+}
+
+.messages-clean-shell .messages-search-input:focus {
+  border-color: rgba(24, 119, 242, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.1) !important;
+}
+
+.messages-clean-shell .messages-search-filter-button {
+  color: #6b7280;
+}
+
+.messages-clean-shell .messages-search-filter-button:hover {
+  background: #eaf2ff;
+  color: var(--messages-clean-blue);
+}
+
+/* Notes, chat heads, and the active-user strip make this page feel like a
+ * dashboard. Messaging stays focused on conversations. */
+.messages-clean-shell .messages-active-users,
+.messages-clean-shell .messenger-notes-tray,
+.messages-clean-shell .note-composer-form,
+.messages-clean-shell .messenger-chat-head-setting {
+  display: none !important;
+}
+
+.messages-clean-shell .messages-filter-tabs {
+  gap: 0.4rem;
+  scrollbar-width: none;
+}
+
+.messages-clean-shell .messages-filter-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.messages-clean-shell .messages-filter-tab {
+  border-radius: 0.7rem !important;
+  padding: 0.48rem 0.7rem !important;
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+.messages-clean-shell .messages-filter-tab.is-active {
+  background: var(--messages-clean-blue) !important;
+  box-shadow: none !important;
+}
+
+.messages-clean-shell .messages-clean-conversation-scroll {
+  padding: 0.5rem !important;
+  background: #ffffff;
+}
+
+.messages-clean-shell .conversation-list-row {
+  border-radius: 0.85rem !important;
+  padding: 0.7rem !important;
+  transition: background-color 140ms ease, box-shadow 140ms ease !important;
+}
+
+.messages-clean-shell .conversation-list-row:hover {
+  border-color: transparent !important;
+  background: #f3f7fd !important;
+  transform: none !important;
+}
+
+.messages-clean-shell .conversation-list-row[class*='bg-blue-50'],
+.messages-clean-shell .conversation-list-row[class*='bg-blue-950'] {
+  border-color: transparent !important;
+  background: #eaf2ff !important;
+  box-shadow: inset 3px 0 0 var(--messages-clean-blue) !important;
+}
+
+.messages-clean-shell .messenger-group-section {
+  padding: 0.15rem;
+}
+
+.messages-clean-shell .messages-clean-thread-panel {
+  background: #f8fafc !important;
+}
+
+.messages-clean-shell .messages-clean-thread-header,
+.messages-clean-shell .messages-clean-thread-search,
+.messages-clean-shell .messages-clean-composer {
+  border-color: var(--messages-clean-line) !important;
+  background: #ffffff !important;
+}
+
+.messages-clean-shell .messages-clean-thread-header {
+  min-height: 4.35rem;
+}
+
+.messages-clean-shell .messages-clean-thread-search {
+  padding: 0.45rem 0.75rem !important;
+}
+
+.messages-clean-shell .messages-clean-thread-search input {
+  height: 2.35rem !important;
+  border-color: transparent !important;
+  border-radius: 0.8rem !important;
+  background: #f6f8fb !important;
+}
+
+.messages-clean-shell .messages-clean-thread {
+  background: #f8fafc !important;
+}
+
+.messages-clean-shell .messages-clean-composer {
+  padding: 0.7rem 0.8rem !important;
+}
+
+.messages-clean-shell .messages-clean-empty-state {
+  position: relative;
+  overflow: hidden;
+  background: #f8fafc !important;
+}
+
+.messages-clean-shell .messages-clean-empty-state::before {
+  position: absolute;
+  inset: 0;
+  content: '';
+  background:
+    radial-gradient(circle at 50% 42%, rgba(24, 119, 242, 0.07), transparent 14rem),
+    linear-gradient(135deg, transparent 0 49.85%, rgba(24, 119, 242, 0.035) 50%, transparent 50.15%);
+  pointer-events: none;
+}
+
+.messages-clean-shell .messages-clean-empty-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 20rem;
+}
+
+.messages-clean-shell .messages-clean-empty-icon {
+  display: inline-grid;
+  width: 3.5rem;
+  height: 3.5rem;
+  place-items: center;
+  border: 1px solid #d9e8ff;
+  border-radius: 1.15rem;
+  background: #ffffff;
+  color: var(--messages-clean-blue);
+  box-shadow: 0 8px 20px rgba(24, 119, 242, 0.09);
+}
+
+.messages-clean-shell .messages-clean-empty-inner h3 {
+  margin-top: 1rem;
+  color: #182230;
+  font-size: 1.25rem;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+}
+
+.messages-clean-shell .messages-clean-empty-inner p {
+  margin: 0.45rem auto 0;
+  color: var(--messages-clean-muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.messages-clean-shell .messages-clean-new-message {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 1.25rem;
+  border-radius: 0.8rem;
+  background: var(--messages-clean-blue);
+  padding: 0.66rem 0.85rem;
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 750;
+  box-shadow: 0 8px 16px rgba(24, 119, 242, 0.16);
+  transition: background-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.messages-clean-shell .messages-clean-new-message:hover {
+  background: var(--messages-clean-blue-dark);
+  box-shadow: 0 10px 20px rgba(24, 119, 242, 0.22);
+  transform: translateY(-1px);
+}
+
+.messages-clean-shell .messages-clean-new-message:focus-visible,
+.messages-clean-shell .conversation-list-row:focus-visible {
+  outline: 3px solid rgba(24, 119, 242, 0.24);
+  outline-offset: 2px;
+}
+
+@media (min-width: 768px) {
+  .messages-clean-shell .messages-clean-list {
+    width: clamp(17.5rem, 24vw, 20rem) !important;
+  }
+
+  .messages-pro-shell.messages-clean-shell.mobile-messenger-shell:not(.is-conversation-open) .messages-clean-list {
+    width: 100% !important;
+  }
+
+  .messages-clean-shell .messages-clean-thread {
+    padding: 1.25rem 1.5rem !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .messages-clean-shell {
+    border-radius: 0 !important;
+  }
+
+  .messages-clean-shell .messages-clean-empty-state {
+    display: none !important;
+  }
+
+  .messages-clean-shell .messages-conversation-back {
+    width: 2.5rem !important;
+    padding: 0.45rem !important;
+  }
+
+  .messages-clean-shell .messages-conversation-back-label {
+    display: none;
+  }
+}
+
+/* Keep the quiet surface hierarchy in the existing dark preference too. */
+.dark .messages-clean-shell,
+.dark .messages-clean-shell .messages-clean-layout,
+.dark .messages-clean-shell .messages-clean-list,
+.dark .messages-clean-shell .messages-clean-list-header,
+.dark .messages-clean-shell .messages-clean-thread-header,
+.dark .messages-clean-shell .messages-clean-thread-search,
+.dark .messages-clean-shell .messages-clean-composer {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+.dark .messages-clean-shell .messages-clean-thread,
+.dark .messages-clean-shell .messages-clean-thread-panel,
+.dark .messages-clean-shell .messages-clean-empty-state {
+  background: var(--background) !important;
+}
+
+.dark .messages-clean-shell .messages-clean-conversation-scroll {
+  background: var(--surface) !important;
+}
+
+.dark .messages-clean-shell .messages-search-input,
+.dark .messages-clean-shell .messages-clean-thread-search input {
+  background: var(--surface-active) !important;
+  color: var(--text-primary);
+}
+
+.dark .messages-clean-shell .conversation-list-row:hover {
+  background: var(--surface-hover) !important;
+}
+
+.dark .messages-clean-shell .conversation-list-row[class*='bg-blue-50'],
+.dark .messages-clean-shell .conversation-list-row[class*='bg-blue-950'] {
+  background: var(--accent-subtle) !important;
+  box-shadow: inset 3px 0 0 var(--accent) !important;
+}
+
+.dark .messages-clean-shell .messages-clean-empty-inner h3 {
+  color: var(--text-primary);
+}
+
+.dark .messages-clean-shell .messages-clean-empty-icon {
+  border-color: var(--border);
+  background: var(--surface-elevated);
+  color: var(--accent);
+}
+
+/*
+ * Image chat backgrounds are part of the conversation, not a faint texture
+ * behind opaque application panels.  Keep one sharp wallpaper layer across
+ * the whole thread, then use a light glass treatment only where controls need
+ * contrast.  In particular, avoid a heavy backdrop blur: it made a selected
+ * photo look soft and washed out in the header and composer.
+ */
+.messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-clean-thread-panel.chat-bg-image {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: transparent !important;
+}
+
+.messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-clean-thread-panel.chat-bg-image::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  content: '';
+  pointer-events: none;
+  background: var(--chat-background-image) center / cover no-repeat;
+  transform: translateZ(0);
+}
+
+/* A tiny contrast wash keeps timestamps readable without dulling the art. */
+.messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-clean-thread-panel.chat-bg-image::after {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  content: '';
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.035), rgba(248, 250, 252, 0.075));
+}
+
+.messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-clean-thread-panel.chat-bg-image > * {
+  position: relative;
+  z-index: 1;
+}
+
+.messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-clean-thread-panel.chat-bg-image .messages-clean-thread,
+.messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-clean-thread-panel.chat-bg-image .group-chat-thread.mobile-message-thread {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+.messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-clean-thread-panel.chat-bg-image :is(
+  .messages-clean-thread-header,
+  .messages-clean-thread-search,
+  .pinned-message-preview,
+  .messages-clean-composer,
+  .group-chat-search-bar,
+  .group-message-composer-footer
+) {
+  border-color: rgba(255, 255, 255, 0.62) !important;
+  background: rgba(255, 255, 255, 0.38) !important;
+  -webkit-backdrop-filter: saturate(1.06) !important;
+  backdrop-filter: saturate(1.06) !important;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.07) !important;
+}
+
+.messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-clean-thread-panel.chat-bg-image .messages-clean-thread-search {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+.messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-clean-thread-panel.chat-bg-image .messages-clean-composer,
+.messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-clean-thread-panel.chat-bg-image .group-message-composer-footer {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.4)) !important;
+  box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.09) !important;
+}
+
+.messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-clean-thread-panel.chat-bg-image .messages-clean-thread-search input,
+.messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-clean-thread-panel.chat-bg-image .message-composer-input {
+  border-color: rgba(255, 255, 255, 0.68) !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  box-shadow: 0 1px 8px rgba(15, 23, 42, 0.08) !important;
+}
+
+.messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-clean-thread-panel.chat-bg-image .pinned-message-preview > div {
+  background: rgba(255, 255, 255, 0.22) !important;
+}
+
+.dark .messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-clean-thread-panel.chat-bg-image::after {
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.08), rgba(2, 6, 23, 0.16));
+}
+
+.dark .messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-clean-thread-panel.chat-bg-image :is(
+  .messages-clean-thread-header,
+  .messages-clean-thread-search,
+  .pinned-message-preview,
+  .messages-clean-composer,
+  .group-chat-search-bar,
+  .group-message-composer-footer
+) {
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  background: rgba(2, 6, 23, 0.34) !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+.dark .messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-clean-thread-panel.chat-bg-image .messages-clean-thread-search,
+.dark .messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-clean-thread-panel.chat-bg-image .messages-clean-composer,
+.dark .messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-clean-thread-panel.chat-bg-image .group-message-composer-footer {
+  background: rgba(2, 6, 23, 0.3) !important;
+}
+
+.dark .messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-clean-thread-panel.chat-bg-image .messages-clean-thread-search input,
+.dark .messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-clean-thread-panel.chat-bg-image .message-composer-input {
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  background: rgba(2, 6, 23, 0.58) !important;
+  box-shadow: none !important;
+}

@@ -1,0 +1,136 @@
+.sync-onboarding {
+  position: fixed;
+  z-index: 130;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.sync-onboarding__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.46);
+  backdrop-filter: blur(4px);
+}
+
+.sync-onboarding__card {
+  position: relative;
+  width: min(100%, 31rem);
+  overflow: hidden;
+  border: 1px solid rgba(191, 219, 254, 0.95);
+  border-radius: 1.35rem;
+  background: #fff;
+  box-shadow: 0 1.5rem 5rem rgba(15, 23, 42, 0.27);
+  animation: sync-onboarding-in 220ms cubic-bezier(.2, .85, .3, 1) both;
+}
+
+.sync-onboarding__header {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid #e5eefb;
+  background: linear-gradient(135deg, #eff8ff, #fff);
+}
+
+.sync-onboarding__icon {
+  display: grid;
+  width: 2.55rem;
+  height: 2.55rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: .85rem;
+  background: #e2f2ff;
+  color: #0875dc;
+}
+
+.sync-onboarding__header p {
+  margin: 0;
+  color: #0f3c78;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+
+.sync-onboarding__progress { display: flex; gap: .32rem; margin-top: .42rem; }
+.sync-onboarding__progress span { display: block; width: 1.7rem; height: .26rem; border-radius: 999px; background: #dbeafe; transition: background 180ms ease; }
+.sync-onboarding__progress span.is-active { background: #1479e8; }
+
+.sync-onboarding__close, .sync-onboarding__back {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border: 0;
+  border-radius: .72rem;
+  background: transparent;
+  color: #64748b;
+}
+.sync-onboarding__close:hover, .sync-onboarding__back:hover { background: #eff6ff; color: #0b67d1; }
+
+.sync-onboarding__content { min-height: 16rem; padding: 1.55rem 1.25rem 1.25rem; animation: sync-onboarding-content 180ms ease both; }
+.sync-onboarding__content h2 { margin: 0; color: #15213a; font-size: 1.42rem; font-weight: 800; letter-spacing: -.025em; }
+.sync-onboarding__content > p { margin: .65rem 0 0; color: #64748b; font-size: .94rem; font-weight: 550; line-height: 1.55; }
+
+.sync-onboarding__welcome-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .55rem; margin-top: 1.35rem; }
+.sync-onboarding__welcome-grid span { display: grid; min-height: 5.2rem; place-content: center; gap: .45rem; border: 1px solid #e1ebf8; border-radius: .9rem; background: #f8fbff; color: #38638e; font-size: .72rem; font-weight: 750; line-height: 1.25; text-align: center; }
+.sync-onboarding__welcome-grid svg { margin-inline: auto; color: #1479e8; }
+
+.sync-onboarding__profile-card, .sync-onboarding__suggestion, .sync-onboarding__destinations button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: .7rem;
+  border: 1px solid #dceafa;
+  border-radius: .9rem;
+  background: #f8fbff;
+  color: #0f4f96;
+  text-align: left;
+}
+.sync-onboarding__profile-card { margin-top: 1.35rem; padding: 1rem; }
+.sync-onboarding__profile-card:hover { border-color: #a8d3ff; background: #eff8ff; }
+.sync-onboarding__profile-card > span { display: grid; min-width: 0; flex: 1; gap: .15rem; }
+.sync-onboarding__profile-card strong, .sync-onboarding__suggestion strong { color: #172033; font-size: .88rem; font-weight: 800; }
+.sync-onboarding__profile-card small, .sync-onboarding__suggestion small { overflow: hidden; color: #718096; font-size: .75rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+
+.sync-onboarding__suggestions { display: grid; gap: .55rem; margin-top: 1.15rem; }
+.sync-onboarding__suggestion { padding: .55rem .6rem; }
+.sync-onboarding__suggestion-avatar { width: 2.35rem; height: 2.35rem; flex: 0 0 auto; overflow: hidden; border-radius: 999px; object-fit: cover; }
+.sync-onboarding__suggestion-avatar--fallback { display: grid; place-items: center; background: linear-gradient(135deg, #0b67d1, #37a9e5); color: #fff; font-size: .82rem; font-weight: 800; }
+.sync-onboarding__suggestion > span { display: grid; gap: .1rem; }
+.sync-onboarding__suggestion button { display: inline-flex; min-width: 4rem; align-items: center; justify-content: center; gap: .28rem; border: 0; border-radius: .65rem; background: #1479e8; padding: .48rem .62rem; color: #fff; font-size: .73rem; font-weight: 800; }
+.sync-onboarding__suggestion button:disabled { background: #e2f1ff; color: #2772b9; }
+.sync-onboarding__suggestion-loading, .sync-onboarding__empty { display: flex; align-items: center; gap: .45rem; margin: 0; border-radius: .75rem; background: #f8fbff; padding: .85rem; color: #718096; font-size: .8rem; font-weight: 650; }
+
+.sync-onboarding__destinations { display: grid; gap: .52rem; margin-top: 1.25rem; }
+.sync-onboarding__destinations button { padding: .78rem .85rem; font-size: .82rem; font-weight: 800; }
+.sync-onboarding__destinations button:hover { border-color: #a8d3ff; background: #eff8ff; }
+
+.sync-onboarding__footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .88rem 1.15rem; border-top: 1px solid #e5eefb; }
+.sync-onboarding__quiet { border: 0; background: transparent; color: #6b7a90; font-size: .78rem; font-weight: 750; }
+.sync-onboarding__quiet:hover { color: #0b67d1; }
+.sync-onboarding__next { display: inline-flex; align-items: center; gap: .38rem; border: 0; border-radius: .72rem; background: #1479e8; padding: .62rem .82rem; color: #fff; font-size: .8rem; font-weight: 800; box-shadow: 0 .45rem 1rem rgba(20, 121, 232, .2); }
+.sync-onboarding__next:hover { background: #0b67d1; }
+
+@keyframes sync-onboarding-in { from { opacity: 0; transform: translateY(.75rem) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes sync-onboarding-content { from { opacity: 0; transform: translateX(.45rem); } to { opacity: 1; transform: translateX(0); } }
+
+.dark .sync-onboarding__card { border-color: #28425f; background: #111b2a; }
+.dark .sync-onboarding__header { border-color: #28425f; background: linear-gradient(135deg, #12243c, #111b2a); }
+.dark .sync-onboarding__content h2, .dark .sync-onboarding__profile-card strong, .dark .sync-onboarding__suggestion strong { color: #f1f7ff; }
+.dark .sync-onboarding__content > p, .dark .sync-onboarding__profile-card small, .dark .sync-onboarding__suggestion small { color: #a9bdd5; }
+.dark .sync-onboarding__profile-card, .dark .sync-onboarding__suggestion, .dark .sync-onboarding__destinations button, .dark .sync-onboarding__welcome-grid span, .dark .sync-onboarding__suggestion-loading, .dark .sync-onboarding__empty { border-color: #28425f; background: #15243a; color: #b9d6f5; }
+.dark .sync-onboarding__footer { border-color: #28425f; }
+
+@media (max-width: 480px) {
+  .sync-onboarding { align-items: end; padding: 0; }
+  .sync-onboarding__card { width: 100%; border-radius: 1.3rem 1.3rem 0 0; }
+  .sync-onboarding__content { min-height: 17rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sync-onboarding__card, .sync-onboarding__content { animation: none; }
+  .sync-onboarding__progress span { transition: none; }
+}

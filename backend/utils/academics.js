@@ -1,0 +1,177 @@
+const CAMPUS_OPTIONS = [
+  'CAGWAIT',
+  'TANDAG (MAIN)',
+  'TAGBINA',
+  'LIANGA',
+  'BISLIG',
+  'SAN MIGUEL',
+  'CANTILAN'
+];
+
+const COURSE_OPTIONS = [
+  'Bachelor of Science in Information Technology',
+  'Bachelor of Science in Computer Science',
+  'Bachelor of Science in Computer Engineering',
+  'Bachelor of Science in Civil Engineering',
+  'Bachelor of Science in Mechanical Engineering',
+  'Bachelor of Science in Electrical Engineering',
+  'Bachelor of Science in Forestry',
+  'Bachelor of Science in Agriculture Major in Crop Science',
+  'Bachelor of Science in Agricultural Technology',
+  'Bachelor in Agricultural Technology',
+  'Bachelor of Science in Fisheries',
+  'Bachelor of Science in Marine Biology',
+  'Bachelor of Science in Environmental Science',
+  'Bachelor of Science in Biology',
+  'Bachelor of Science in Mathematics',
+  'Bachelor of Science in Midwifery',
+  'Bachelor of Science in Criminology',
+  'Bachelor of Public Administration',
+  'Bachelor of Arts in Political Science',
+  'Bachelor of Arts in English',
+  'Bachelor of Arts in Economics',
+  'Batsilyer sa Sining ng Filipino',
+  'Bachelor of Science in Hospitality Management',
+  'Bachelor of Science in Hospitality Management major in Hotel and Restaurant Management',
+  'Bachelor of Science in Tourism Management',
+  'Bachelor of Science in Business Administration major in Marketing Management',
+  'Bachelor of Science in Business Administration major in Human Resource Management',
+  'Bachelor of Science in Business Administration major in Human Resource Development Management',
+  'Bachelor of Science in Business Administration major in Financial Management',
+  'Bachelor of Science in Business Administration major in Business Economics',
+  'Bachelor of Elementary Education',
+  'Bachelor of Early Childhood Education',
+  'Bachelor of Physical Education',
+  'Bachelor of Secondary Education major in Science',
+  'Bachelor of Secondary Education major in Biological Science',
+  'Bachelor of Secondary Education major in Filipino',
+  'Bachelor of Secondary Education major in English',
+  'Bachelor of Secondary Education major in Mathematics',
+  'Bachelor of Secondary Education Major in Technology and Livelihood Education',
+  'Bachelor of Technology and Livelihood Education major in Home Economics',
+  'Bachelor of Technical-Vocational Teacher Education Major in Automotive Technology',
+  'Bachelor of Technical-Vocational Teacher Education Major in Electrical Technology',
+  'Bachelor of Technical-Vocational Teacher Education Major in Mechanical Technology',
+  'Bachelor of Technical Teacher Education major in Garments Technology',
+  'Bachelor of Technical Teacher Education major in Food & Services Management',
+  'Bachelor of Technical Teacher Education major in Electrical Technology',
+  'Bachelor of Technical Teacher Education major in Civil Technology',
+  'Bachelor of Technical Teacher Education major in Automotive',
+  'Bachelor of Science in Industrial Technology major in Mechanical Technology',
+  'Bachelor of Science in Industrial Technology major in Garments Technology',
+  'Bachelor of Science in Industrial Technology major in Foods Technology',
+  'Bachelor of Science in Industrial Technology major in Electronics Technology',
+  'Bachelor of Science in Industrial Technology major in Electrical Technology',
+  'Bachelor of Science in Industrial Technology major in Automotive Technology',
+  'Bachelor of Science in Industrial Technology major in Architectural Drafting',
+  'Bachelor of Science in Industrial Technology major in Culinary Technology',
+  'Bachelor of Science in Industrial Technology major in Computer Technology',
+  'Diploma in Teaching',
+  'Juris Doctor Program',
+  'Bachelor of Laws',
+  'Master of Science in Teaching Social Sciences',
+  'Master of Science in Teaching Science Education',
+  'Master of Science in Teaching Mathematics',
+  'Master of Science in Teaching Home Economics',
+  'Master of Science in Computer Science',
+  'Master of Legal Studies',
+  'Master of Arts in Filipino Language Teaching',
+  'Master of Arts in English Language Teaching',
+  'Master of Arts in Education',
+  'Master in Public Administration',
+  'Master in Business Administration',
+  'Master in Teaching Technology Education',
+  'Doctor of Philosophy - Science',
+  'Doctor of Philosophy - Mathematics',
+  'Doctor of Education major in English Language Teaching',
+  'Doctor of Education major in Educational Management'
+];
+
+const key = (value = '') => String(value).toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const courseByKey = new Map(COURSE_OPTIONS.map(course => [key(course), course]));
+
+const aliasMap = new Map([
+  ['bsit', 'Bachelor of Science in Information Technology'],
+  ['bsinfotech', 'Bachelor of Science in Information Technology'],
+  ['bsinformationtechnology', 'Bachelor of Science in Information Technology'],
+  ['bsininformationtechnology', 'Bachelor of Science in Information Technology'],
+  ['bsinfo', 'Bachelor of Science in Information Technology'],
+  ['bsinfotechnology', 'Bachelor of Science in Information Technology'],
+  ['bscs', 'Bachelor of Science in Computer Science'],
+  ['bscomputerscience', 'Bachelor of Science in Computer Science'],
+  ['bscpe', 'Bachelor of Science in Computer Engineering'],
+  ['bscomputerengineering', 'Bachelor of Science in Computer Engineering'],
+  ['bsce', 'Bachelor of Science in Civil Engineering'],
+  ['bscivilengineering', 'Bachelor of Science in Civil Engineering'],
+  ['bsme', 'Bachelor of Science in Mechanical Engineering'],
+  ['bsmechanicalengineering', 'Bachelor of Science in Mechanical Engineering'],
+  ['bsee', 'Bachelor of Science in Electrical Engineering'],
+  ['bselectricalengineering', 'Bachelor of Science in Electrical Engineering'],
+  ['bsforestry', 'Bachelor of Science in Forestry'],
+  ['bsf', 'Bachelor of Science in Forestry'],
+  ['bsagriculture', 'Bachelor of Science in Agriculture Major in Crop Science'],
+  ['bsagriculturaltechnology', 'Bachelor of Science in Agricultural Technology'],
+  ['bat', 'Bachelor in Agricultural Technology'],
+  ['bsfisheries', 'Bachelor of Science in Fisheries'],
+  ['bsmarinebiology', 'Bachelor of Science in Marine Biology'],
+  ['bsenvironmentalscience', 'Bachelor of Science in Environmental Science'],
+  ['bsbiology', 'Bachelor of Science in Biology'],
+  ['bsmathematics', 'Bachelor of Science in Mathematics'],
+  ['bsmath', 'Bachelor of Science in Mathematics'],
+  ['bsmidwifery', 'Bachelor of Science in Midwifery'],
+  ['bscrim', 'Bachelor of Science in Criminology'],
+  ['bscriminology', 'Bachelor of Science in Criminology'],
+  ['bpa', 'Bachelor of Public Administration'],
+  ['bapoliticalscience', 'Bachelor of Arts in Political Science'],
+  ['bapolsci', 'Bachelor of Arts in Political Science'],
+  ['baenglish', 'Bachelor of Arts in English'],
+  ['baeconomics', 'Bachelor of Arts in Economics'],
+  ['bsfilipino', 'Batsilyer sa Sining ng Filipino'],
+  ['bshm', 'Bachelor of Science in Hospitality Management'],
+  ['bshospitalitymanagement', 'Bachelor of Science in Hospitality Management'],
+  ['bstm', 'Bachelor of Science in Tourism Management'],
+  ['bstourismmanagement', 'Bachelor of Science in Tourism Management'],
+  ['bsba', 'Bachelor of Science in Business Administration major in Financial Management'],
+  ['bsbafm', 'Bachelor of Science in Business Administration major in Financial Management'],
+  ['bsbafinancialmanagement', 'Bachelor of Science in Business Administration major in Financial Management'],
+  ['bsbahrm', 'Bachelor of Science in Business Administration major in Human Resource Management'],
+  ['bsbahumanresourcemanagement', 'Bachelor of Science in Business Administration major in Human Resource Management'],
+  ['bsbahrdm', 'Bachelor of Science in Business Administration major in Human Resource Development Management'],
+  ['bsbamm', 'Bachelor of Science in Business Administration major in Marketing Management'],
+  ['bsbamarketingmanagement', 'Bachelor of Science in Business Administration major in Marketing Management'],
+  ['bsbabe', 'Bachelor of Science in Business Administration major in Business Economics'],
+  ['beed', 'Bachelor of Elementary Education'],
+  ['beced', 'Bachelor of Early Childhood Education'],
+  ['bped', 'Bachelor of Physical Education'],
+  ['bsedscience', 'Bachelor of Secondary Education major in Science'],
+  ['bsedbiologicalscience', 'Bachelor of Secondary Education major in Biological Science'],
+  ['bsedfilipino', 'Bachelor of Secondary Education major in Filipino'],
+  ['bsedenglish', 'Bachelor of Secondary Education major in English'],
+  ['bsedmath', 'Bachelor of Secondary Education major in Mathematics'],
+  ['bsedmathematics', 'Bachelor of Secondary Education major in Mathematics'],
+  ['bsedtle', 'Bachelor of Secondary Education Major in Technology and Livelihood Education'],
+  ['btledhe', 'Bachelor of Technology and Livelihood Education major in Home Economics']
+]);
+
+const normalizeCourse = (value = '') => {
+  const normalized = key(value);
+  if (!normalized) return '';
+  return courseByKey.get(normalized) || aliasMap.get(normalized) || '';
+};
+
+const normalizeCampus = (value = '') => {
+  const normalized = String(value || '').trim().toUpperCase().replace(/\s+/g, ' ');
+  if (!normalized) return '';
+  const campus = normalized === 'MAIN' || normalized === 'TANDAG' || normalized === 'TANDAG MAIN'
+    ? 'TANDAG (MAIN)'
+    : normalized.replace('TANDAG(MAIN)', 'TANDAG (MAIN)');
+  return CAMPUS_OPTIONS.includes(campus) ? campus : '';
+};
+
+module.exports = {
+  CAMPUS_OPTIONS,
+  COURSE_OPTIONS,
+  normalizeCampus,
+  normalizeCourse
+};

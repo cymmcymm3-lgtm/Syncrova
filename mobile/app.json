@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "Syncrova Messenger",
+    "slug": "syncrova-messenger-native",
+    "version": "4.4.44",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "syncrova-messenger",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.nemsu.studenthub.messenger",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Syncrova uses the camera to send photo and video messages.",
+        "NSMicrophoneUsageDescription": "Syncrova uses the microphone for media messages.",
+        "NSPhotoLibraryUsageDescription": "Syncrova uses your library to attach photos and videos."
+      }
+    },
+    "android": {
+      "package": "com.nemsu.studenthub.messenger",
+      "versionCode": 91,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "READ_MEDIA_IMAGES",
+        "READ_MEDIA_VIDEO"
+      ]
+    },
+    "plugins": [
+      [
+        "@livekit/react-native-expo-plugin",
+        {
+          "android": {
+            "audioType": "communication"
+          }
+        }
+      ],
+      "@config-plugins/react-native-webrtc",
+      "expo-image-picker",
+      "expo-camera",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow Syncrova to save photos and videos from chats to your gallery.",
+          "savePhotosPermission": "Allow Syncrova to save chat media to your gallery."
+        }
+      ],
+      "expo-sharing"
+    ],
+    "extra": {}
+  }
+}

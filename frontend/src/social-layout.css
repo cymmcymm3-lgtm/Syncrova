@@ -1,0 +1,926 @@
+/*
+ * Light-only social layout
+ * Keeps Syncrova branding and features, while using the compact, three-column
+ * social-feed structure shown in the approved reference.
+ */
+
+:root {
+  --social-canvas: #f0f2f5;
+  --social-surface: #ffffff;
+  --social-control: #f0f2f5;
+  --social-control-hover: #e4e6eb;
+  --social-border: #d9dde3;
+  --social-text: #1c1e21;
+  --social-muted: #65676b;
+  --social-accent: #0866ff;
+  --social-accent-hover: #1b74e4;
+  --social-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  --background: var(--social-canvas);
+  --sidebar: var(--social-canvas);
+  --surface: var(--social-surface);
+  --surface-elevated: var(--social-surface);
+  --surface-hover: var(--social-control);
+  --surface-active: var(--social-control-hover);
+  --input: var(--social-control);
+  --border: var(--social-border);
+  --text-primary: var(--social-text);
+  --text-secondary: var(--social-muted);
+  --text-muted: #8a8d91;
+  --accent: var(--social-accent);
+  --accent-hover: var(--social-accent-hover);
+  --ui-background-rgb: 240 242 245;
+  --ui-sidebar-rgb: 240 242 245;
+  --ui-surface-rgb: 255 255 255;
+  --ui-surface-elevated-rgb: 255 255 255;
+  --ui-surface-hover-rgb: 240 242 245;
+  --ui-surface-active-rgb: 228 230 235;
+  --ui-input-rgb: 240 242 245;
+  --ui-border-rgb: 217 221 227;
+  --ui-text-primary-rgb: 28 30 33;
+  --ui-text-muted-rgb: 101 103 107;
+  --ui-accent-rgb: 8 102 255;
+  --ui-accent-hover-rgb: 27 116 228;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  background: var(--social-canvas) !important;
+  color: var(--social-text);
+}
+
+.portal-shell,
+.layout-content-frame,
+.app-main,
+.app-page-content,
+.mobile-page,
+.dashboard-page,
+.dashboard-facebook-mobile,
+.dashboard-facebook-mobile--unified {
+  background: var(--social-canvas) !important;
+  background-image: none !important;
+}
+
+/* Header ------------------------------------------------------------------ */
+.desktop-topbar,
+.mobile-topbar {
+  height: 3.5rem !important;
+  min-height: 3.5rem !important;
+  background: var(--social-surface) !important;
+  background-image: none !important;
+  border-bottom: 1px solid var(--social-border) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+  color: var(--social-text) !important;
+}
+
+.desktop-topbar .app-logo-mark {
+  height: 2.5rem !important;
+  width: 2.5rem !important;
+  border-radius: 9999px !important;
+  background: var(--social-accent) !important;
+  padding: 0.18rem !important;
+  box-shadow: none !important;
+  ring: 0 !important;
+}
+
+.desktop-topbar > div:first-child > div:nth-child(2),
+.desktop-topbar > div:last-child > div:first-child,
+.desktop-topbar > div:last-child > a > span:last-child {
+  display: none !important;
+}
+
+.desktop-topbar > div:first-child > div > p:first-child,
+.desktop-topbar .text-white,
+.desktop-topbar .text-white\/90,
+.desktop-topbar .text-white\/75 {
+  color: var(--social-text) !important;
+}
+
+.desktop-topbar > div:first-child > div > p:last-child {
+  display: none !important;
+}
+
+.desktop-header-search {
+  min-width: 15.75rem !important;
+  background: var(--social-control) !important;
+  color: var(--social-muted) !important;
+  box-shadow: none !important;
+}
+
+.desktop-header-search:hover {
+  background: var(--social-control-hover) !important;
+  color: var(--social-text) !important;
+}
+
+.desktop-primary-nav {
+  align-self: stretch;
+  gap: 0 !important;
+}
+
+.desktop-primary-nav-item {
+  display: grid;
+  width: 6rem;
+  height: 3.5rem !important;
+  place-items: center;
+  border: 0 !important;
+  border-bottom: 3px solid transparent !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--social-muted) !important;
+  box-shadow: none !important;
+}
+
+.desktop-primary-nav-item:hover {
+  background: var(--social-control) !important;
+  color: var(--social-text) !important;
+}
+
+.desktop-primary-nav-item.is-active,
+.desktop-primary-nav-item[aria-current='page'] {
+  border-bottom-color: var(--social-accent) !important;
+  background: transparent !important;
+  color: var(--social-accent) !important;
+}
+
+.desktop-topbar button,
+.desktop-topbar a[class*='bg-white\/'] {
+  background: var(--social-control) !important;
+  border-color: transparent !important;
+  color: var(--social-text) !important;
+  box-shadow: none !important;
+}
+
+.desktop-topbar button {
+  border-radius: 9999px !important;
+}
+
+.desktop-topbar button:hover,
+.desktop-topbar a[class*='bg-white\/']:hover {
+  background: var(--social-control-hover) !important;
+}
+
+.desktop-topbar .desktop-primary-nav-item,
+.desktop-topbar .desktop-primary-nav-item:hover {
+  background: transparent !important;
+}
+
+.desktop-topbar .desktop-primary-nav-item:hover {
+  background: var(--social-control) !important;
+}
+
+/* Three-column desktop canvas ------------------------------------------------ */
+@media (min-width: 768px) {
+  .desktop-sidebar {
+    top: 3.5rem !important;
+  }
+
+  .layout-content-frame {
+    padding-top: 3.5rem !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .desktop-sidebar {
+    width: 20rem !important;
+    padding: 0.75rem 0.5rem 1.5rem !important;
+    background: var(--social-canvas) !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .layout-content-frame {
+    margin-left: 20rem !important;
+  }
+
+  .desktop-social-rail {
+    width: 20rem !important;
+    padding: 1rem 0.75rem 2rem !important;
+    background: var(--social-canvas) !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .desktop-social-rail > div {
+    top: 4.25rem !important;
+  }
+
+  .app-main:has(.home-feed) {
+    padding: 1rem 1rem 3rem !important;
+  }
+
+  .home-feed {
+    width: min(100%, 38.25rem) !important;
+    max-width: 38.25rem !important;
+    margin: 0 auto !important;
+  }
+}
+
+/* Left shortcuts ----------------------------------------------------------- */
+.desktop-sidebar .sidebar-profile-card,
+.desktop-sidebar .sidebar-nav,
+.desktop-sidebar section,
+.desktop-sidebar .sidebar-quick-controls {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.desktop-sidebar .sidebar-profile-card {
+  margin: 0 0 0.35rem !important;
+  padding: 0.35rem 0.75rem !important;
+}
+
+.desktop-sidebar .sidebar-quick-controls,
+.desktop-sidebar nav > section > p {
+  display: none !important;
+}
+
+.desktop-sidebar .sidebar-profile-link,
+.desktop-sidebar .sidebar-profile-link:hover {
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--social-text) !important;
+  box-shadow: none !important;
+}
+
+.desktop-sidebar .sidebar-profile-avatar {
+  background: var(--social-accent) !important;
+  box-shadow: none !important;
+}
+
+.desktop-sidebar .sidebar-nav-link {
+  min-height: 3rem !important;
+  margin: 0.1rem 0 !important;
+  padding: 0.65rem 0.75rem !important;
+  border: 0 !important;
+  border-radius: 0.5rem !important;
+  background: transparent !important;
+  color: var(--social-text) !important;
+  box-shadow: none !important;
+}
+
+.desktop-sidebar .sidebar-nav-link:hover,
+.desktop-sidebar .sidebar-nav-link.is-active,
+.desktop-sidebar .sidebar-nav-link[aria-current='page'] {
+  background: var(--social-control-hover) !important;
+  color: var(--social-text) !important;
+}
+
+.desktop-sidebar .sidebar-nav-link > div,
+.desktop-sidebar .sidebar-nav-link.is-active > div,
+.desktop-sidebar .sidebar-nav-link[aria-current='page'] > div {
+  background: transparent !important;
+  color: var(--social-muted) !important;
+  box-shadow: none !important;
+}
+
+.desktop-sidebar .sidebar-nav-link[aria-current='page'] svg {
+  color: var(--social-accent) !important;
+}
+
+/* Center feed -------------------------------------------------------------- */
+.dashboard-facebook-mobile--unified {
+  min-height: 100% !important;
+  padding: 0 !important;
+}
+
+.dashboard-facebook-mobile--unified .home-feed--facebook-mobile,
+.home-feed--facebook-mobile {
+  width: 100% !important;
+  max-width: none !important;
+  gap: 0.65rem !important;
+  padding: 0 !important;
+}
+
+.home-feed-mobile-slot,
+.dashboard-story-panel,
+.dashboard-story-panel--fb-mobile,
+.dashboard-story-rail-shell {
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.dashboard-mobile-story-heading {
+  display: none !important;
+}
+
+.dashboard-story-rail {
+  gap: 0.5rem !important;
+  min-height: 11.25rem !important;
+  padding: 0 !important;
+}
+
+.dashboard-create-story-tile,
+.dashboard-story-tile {
+  width: 6.35rem !important;
+  min-width: 6.35rem !important;
+  height: 11.25rem !important;
+  border: 0 !important;
+  border-radius: 0.55rem !important;
+  background: var(--social-surface) !important;
+  box-shadow: var(--social-shadow) !important;
+}
+
+.dashboard-create-story-tile:hover,
+.dashboard-story-tile:hover {
+  filter: brightness(0.96);
+  transform: none !important;
+}
+
+.dashboard-create-story-caption-surface {
+  background: var(--social-surface) !important;
+}
+
+.dashboard-create-story-plus {
+  background: var(--social-accent) !important;
+  border-color: var(--social-surface) !important;
+  box-shadow: none !important;
+}
+
+.home-feed-composer-card,
+.feed-card,
+.dashboard-content-card,
+.dashboard-post-card {
+  background: var(--social-surface) !important;
+  border: 0 !important;
+  border-radius: 0.5rem !important;
+  box-shadow: var(--social-shadow) !important;
+}
+
+.home-feed-composer-card {
+  padding: 0.7rem 0.75rem !important;
+}
+
+.home-feed-composer-top-row {
+  min-height: 2.55rem;
+}
+
+.home-feed-composer-button > span:nth-child(2) {
+  min-height: 2.45rem !important;
+  background: var(--social-control) !important;
+  color: var(--social-muted) !important;
+}
+
+.home-feed-composer-button:hover > span:nth-child(2) {
+  background: var(--social-control-hover) !important;
+}
+
+.home-feed-composer-inline-actions .home-feed-composer-action {
+  display: grid !important;
+  width: 2.15rem !important;
+  height: 2.15rem !important;
+  place-items: center;
+  border: 0 !important;
+  border-radius: 0.45rem !important;
+  background: transparent !important;
+  color: var(--social-muted) !important;
+}
+
+.home-feed-composer-inline-actions .home-feed-composer-action:hover {
+  background: var(--social-control) !important;
+}
+
+.feed-card-header {
+  padding: 0.75rem 1rem !important;
+}
+
+.feed-card-body {
+  padding-right: 1rem !important;
+  padding-left: 1rem !important;
+}
+
+.feed-card-stats,
+.feed-card-comments {
+  border-color: var(--social-border) !important;
+}
+
+.feed-card-action-button,
+.feed-reaction-button {
+  border-radius: 0.4rem !important;
+  color: var(--social-muted) !important;
+}
+
+.feed-card-action-button:hover,
+.feed-reaction-button:hover {
+  background: var(--social-control) !important;
+  color: var(--social-text) !important;
+}
+
+.home-feed--facebook-mobile > div[class*='border-dashed'] {
+  border: 0 !important;
+  border-radius: 0.5rem !important;
+  background: var(--social-surface) !important;
+  box-shadow: var(--social-shadow) !important;
+}
+
+/* Messaging keeps the same calm light hierarchy as the feed. */
+.messages-pro-shell,
+.messages-conversation-column,
+.messages-reference-empty-state,
+.message-composer-footer {
+  background: var(--social-surface) !important;
+  border-color: var(--social-border) !important;
+  box-shadow: none !important;
+}
+
+.messages-pro-shell {
+  border-radius: 0.5rem !important;
+}
+
+.conversation-list-row {
+  border-radius: 0.5rem !important;
+}
+
+.conversation-list-row:hover,
+.conversation-list-row.is-selected,
+.conversation-list-row[aria-current='true'] {
+  background: var(--social-control) !important;
+}
+
+.messages-reference-empty-state {
+  background-image: none !important;
+}
+
+.messages-reference-feature-grid > * {
+  border-color: var(--social-border) !important;
+  background: var(--social-control) !important;
+  box-shadow: none !important;
+}
+
+.message-composer-input {
+  background: var(--social-control) !important;
+  border-color: transparent !important;
+}
+
+.message-composer-send {
+  background: var(--social-accent) !important;
+  box-shadow: none !important;
+}
+
+.message-composer-send:hover {
+  background: var(--social-accent-hover) !important;
+}
+
+/* Right rail ---------------------------------------------------------------- */
+.desktop-social-rail section,
+.desktop-social-rail .online-roster-card,
+.desktop-social-rail .quick-actions-card {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.desktop-social-rail > div > section + section {
+  border-top: 1px solid var(--social-border) !important;
+  border-radius: 0 !important;
+}
+
+.desktop-social-rail .online-roster-item,
+.desktop-social-rail .quick-action-item {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.desktop-social-rail a:hover,
+.desktop-social-rail button:hover {
+  background: var(--social-control-hover) !important;
+}
+
+/* Shared light primitives -------------------------------------------------- */
+.card,
+.modal-content,
+[role='dialog'] > div,
+.dropdown-menu,
+.popover-content,
+.toast,
+.table-container {
+  border-color: var(--social-border) !important;
+  box-shadow: var(--social-shadow) !important;
+}
+
+[role='dialog']::backdrop,
+.modal-overlay,
+[class*='modal-backdrop'] {
+  background: rgba(0, 0, 0, 0.42) !important;
+  backdrop-filter: blur(2px);
+}
+
+table thead {
+  background: var(--social-control) !important;
+}
+
+table tr + tr {
+  border-color: var(--social-border) !important;
+}
+
+table tbody tr:hover {
+  background: var(--social-control) !important;
+}
+
+.skeleton-block,
+.mobile-skeleton-card .bg-ui-hover {
+  background: var(--social-control-hover) !important;
+}
+
+input:not([type='checkbox']):not([type='radio']),
+textarea,
+select {
+  border-color: var(--social-border) !important;
+  background: var(--social-surface) !important;
+  color: var(--social-text) !important;
+  box-shadow: none !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--social-accent) !important;
+  outline-offset: 2px;
+  border-color: var(--social-accent) !important;
+  box-shadow: none !important;
+}
+
+.btn-primary,
+button[data-variant='primary'],
+.primary-action {
+  background: var(--social-accent) !important;
+  border-color: var(--social-accent) !important;
+  box-shadow: none !important;
+}
+
+.btn-primary:hover,
+button[data-variant='primary']:hover,
+.primary-action:hover {
+  background: var(--social-accent-hover) !important;
+  border-color: var(--social-accent-hover) !important;
+}
+
+@media (max-width: 1023px) {
+  .app-main:has(.home-feed) {
+    padding: 0.75rem !important;
+  }
+
+  .home-feed {
+    width: 100% !important;
+    max-width: 38.25rem !important;
+    margin: 0 auto !important;
+  }
+}
+
+/* Approved blue-and-white shell treatment. */
+.desktop-topbar,
+.mobile-topbar {
+  background: #0866ff !important;
+  border-bottom-color: #0759dc !important;
+  color: #ffffff !important;
+}
+
+.desktop-topbar .desktop-header-search {
+  background: rgba(255, 255, 255, 0.16) !important;
+  color: #ffffff !important;
+}
+
+.desktop-topbar .desktop-header-search:hover {
+  background: rgba(255, 255, 255, 0.23) !important;
+  color: #ffffff !important;
+}
+
+.desktop-topbar .app-logo-mark {
+  background: #ffffff !important;
+}
+
+.desktop-topbar .text-white,
+.desktop-topbar .text-white\/90,
+.desktop-topbar .text-white\/75 {
+  color: #ffffff !important;
+}
+
+.desktop-topbar button,
+.desktop-topbar a[class*='bg-white\/'] {
+  background: rgba(255, 255, 255, 0.16) !important;
+  color: #ffffff !important;
+}
+
+.desktop-topbar button:hover,
+.desktop-topbar a[class*='bg-white\/']:hover {
+  background: rgba(255, 255, 255, 0.26) !important;
+}
+
+.desktop-primary-nav {
+  display: none !important;
+}
+
+@media (min-width: 1024px) {
+  .desktop-sidebar {
+    background: #f5f8ff !important;
+    border-right: 1px solid #dbeafe !important;
+  }
+}
+
+.desktop-sidebar .sidebar-profile-link {
+  color: #0f2b55 !important;
+}
+
+.desktop-sidebar .sidebar-nav-link {
+  color: #18345b !important;
+}
+
+.desktop-sidebar .sidebar-nav-link > div,
+.desktop-sidebar .sidebar-nav-link svg {
+  color: #356da8 !important;
+}
+
+.desktop-sidebar .sidebar-nav-link:hover {
+  background: #eaf3ff !important;
+  color: #075ecf !important;
+}
+
+.desktop-sidebar .sidebar-nav-link.is-active,
+.desktop-sidebar .sidebar-nav-link[aria-current='page'] {
+  border-left: 3px solid #0866ff !important;
+  background: #dbeafe !important;
+  color: #075ecf !important;
+}
+
+.desktop-sidebar .sidebar-nav-link.is-active > div,
+.desktop-sidebar .sidebar-nav-link.is-active svg,
+.desktop-sidebar .sidebar-nav-link[aria-current='page'] > div,
+.desktop-sidebar .sidebar-nav-link[aria-current='page'] svg {
+  color: #0866ff !important;
+}
+
+.dashboard-create-story-cover {
+  background: #dbeafe !important;
+}
+
+.dashboard-create-story-fallback {
+  background: linear-gradient(145deg, #2d88ff, #0759dc) !important;
+}
+
+/* -------------------------------------------------------------------------
+ * Shared visual-system refinements
+ *
+ * These rules intentionally sit after the legacy social-shell rules.  They
+ * keep the existing information architecture intact, while giving repeated
+ * surfaces one rhythm for elevation, corners, interaction feedback, and
+ * keyboard access.  Component-specific styles still own their layout.
+ * ------------------------------------------------------------------------- */
+:root {
+  --sync-space-1: 0.25rem;
+  --sync-space-2: 0.5rem;
+  --sync-space-3: 0.75rem;
+  --sync-space-4: 1rem;
+  --sync-space-5: 1.25rem;
+  --sync-radius-control: 0.7rem;
+  --sync-radius-card: 0.95rem;
+  --sync-radius-panel: 1.15rem;
+  --sync-control-height: 2.5rem;
+  --sync-elevation-1: 0 1px 2px rgba(15, 23, 42, 0.07), 0 5px 15px rgba(15, 23, 42, 0.045);
+  --sync-elevation-2: 0 2px 5px rgba(15, 23, 42, 0.09), 0 12px 28px rgba(15, 23, 42, 0.075);
+  --sync-focus-ring: 0 0 0 3px rgba(8, 102, 255, 0.24);
+  --sync-motion-fast: 150ms;
+  --sync-motion-standard: 190ms;
+  --sync-motion-ease: cubic-bezier(0.2, 0.75, 0.3, 1);
+}
+
+/* A consistent, restrained elevation hierarchy makes primary content easier
+ * to scan without resorting to large shadows or decorative gradients. */
+@media (min-width: 768px) {
+  :where(
+    .home-feed-composer-card,
+    .feed-card,
+    .dashboard-rank-panel,
+    .profile-clean__hero,
+    .profile-clean__surface,
+    .profile-clean__tabs,
+    .profile-clean__member-card,
+    .profile-clean__signout-card,
+    .friends-clean__header,
+    .friends-clean__toolbar,
+    .friends-clean__person-card,
+    .friends-clean__empty
+  ) {
+    border-color: color-mix(in srgb, var(--border) 92%, transparent) !important;
+    box-shadow: var(--sync-elevation-1) !important;
+  }
+
+  :where(.home-feed-composer-card, .feed-card, .dashboard-rank-panel) {
+    border-radius: var(--sync-radius-card) !important;
+  }
+}
+
+/* Keep controls quick to understand: hover only changes a surface's contrast
+ * and elevation, never its layout.  This avoids the jumpy/gimmicky feel that
+ * was present in a few legacy cards. */
+@media (hover: hover) and (pointer: fine) {
+  :where(
+    .feed-card,
+    .dashboard-rank-panel,
+    .friends-clean__person-card,
+    .profile-clean__surface,
+    .profile-clean__member-card,
+    .profile-clean__signout-card
+  ) {
+    transition:
+      border-color var(--sync-motion-standard) var(--sync-motion-ease),
+      box-shadow var(--sync-motion-standard) var(--sync-motion-ease),
+      background-color var(--sync-motion-standard) var(--sync-motion-ease);
+  }
+
+  :where(.friends-clean__person-card, .profile-clean__surface):hover {
+    border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+    box-shadow: var(--sync-elevation-2) !important;
+  }
+}
+
+/* Keyboard focus must remain apparent even after component-level utility
+ * classes are composed.  The top bar uses a light ring because it is blue. */
+:where(
+  button,
+  a[href],
+  input,
+  select,
+  textarea,
+  summary,
+  [role='button'],
+  [tabindex]:not([tabindex='-1'])
+):focus-visible {
+  outline: 2px solid var(--social-accent) !important;
+  outline-offset: 3px;
+  box-shadow: var(--sync-focus-ring) !important;
+}
+
+.desktop-topbar :where(button, a[href], input, [role='button']):focus-visible,
+.mobile-topbar :where(button, a[href], input, [role='button']):focus-visible {
+  outline-color: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.34) !important;
+}
+
+/* Minimum targets apply to the compact app controls on touch devices while
+ * leaving inline text links and game controls at their intended dimensions. */
+@media (pointer: coarse) {
+  :where(
+    .sidebar-nav-link,
+    .desktop-topbar button,
+    .mobile-topbar-action,
+    .feed-card-action-button,
+    .feed-reaction-button,
+    .home-feed-composer-action,
+    .friends-clean button,
+    .profile-clean__edit-button,
+    .profile-clean__quiet-button,
+    .profile-clean__primary-button,
+    .profile-clean__signout-button
+  ) {
+    min-height: var(--sync-control-height);
+    min-width: var(--sync-control-height);
+  }
+}
+
+/* Let the browser skip off-screen repeated cards.  The intrinsic estimates
+ * prevent scroll jumps, and this deliberately excludes dialogs, composer
+ * sheets, conversation surfaces, and any active game UI. */
+@supports (content-visibility: auto) {
+  @media (min-width: 768px) {
+    .home-feed > .feed-card {
+      content-visibility: auto;
+      contain-intrinsic-size: auto 32rem;
+    }
+
+    .friends-clean__grid > .friends-clean__person-card,
+    .friends-clean__stack > .friends-clean__person-card {
+      content-visibility: auto;
+      contain-intrinsic-size: auto 5.75rem;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(
+    .feed-card,
+    .dashboard-rank-panel,
+    .friends-clean__person-card,
+    .profile-clean__surface,
+    .profile-clean__member-card,
+    .profile-clean__signout-card,
+    .desktop-topbar,
+    .mobile-topbar
+  ) {
+    transition-duration: 1ms !important;
+  }
+}
+
+/* The app currently exposes a fixed light experience, but preserve readable
+ * dark tokens and surfaces for embedded/native shells that still set .dark. */
+.dark {
+  --social-canvas: #0b1220;
+  --social-surface: #111c2e;
+  --social-control: #19263a;
+  --social-control-hover: #24334a;
+  --social-border: #2b3c55;
+  --social-text: #eef5ff;
+  --social-muted: #aebed3;
+  --social-accent: #60a5fa;
+  --social-accent-hover: #93c5fd;
+  --social-shadow: 0 1px 2px rgba(0, 0, 0, 0.24), 0 10px 25px rgba(0, 0, 0, 0.22);
+  --background: var(--social-canvas);
+  --sidebar: var(--social-canvas);
+  --surface: var(--social-surface);
+  --surface-elevated: var(--social-surface);
+  --surface-hover: var(--social-control);
+  --surface-active: var(--social-control-hover);
+  --input: var(--social-control);
+  --border: var(--social-border);
+  --divider: var(--social-border);
+  --text-primary: var(--social-text);
+  --text-secondary: var(--social-muted);
+  --text-muted: #91a4bc;
+  --accent: var(--social-accent);
+  --accent-hover: var(--social-accent-hover);
+  --accent-subtle: rgba(96, 165, 250, 0.16);
+  --focus-ring: rgba(96, 165, 250, 0.28);
+  --ui-background-rgb: 11 18 32;
+  --ui-sidebar-rgb: 11 18 32;
+  --ui-surface-rgb: 17 28 46;
+  --ui-surface-elevated-rgb: 17 28 46;
+  --ui-surface-hover-rgb: 25 38 58;
+  --ui-surface-active-rgb: 36 51 74;
+  --ui-input-rgb: 25 38 58;
+  --ui-border-rgb: 43 60 85;
+  --ui-text-primary-rgb: 238 245 255;
+  --ui-text-muted-rgb: 145 164 188;
+  --ui-accent-rgb: 96 165 250;
+  --ui-accent-hover-rgb: 147 197 253;
+  --sync-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.26), 0 9px 24px rgba(0, 0, 0, 0.22);
+  --sync-elevation-2: 0 2px 5px rgba(0, 0, 0, 0.32), 0 15px 34px rgba(0, 0, 0, 0.28);
+  --sync-focus-ring: 0 0 0 3px rgba(96, 165, 250, 0.28);
+}
+
+.dark .desktop-topbar,
+.dark .mobile-topbar {
+  border-bottom-color: var(--social-border) !important;
+  background: var(--social-surface) !important;
+}
+
+.dark .desktop-sidebar {
+  border-right-color: var(--social-border) !important;
+  background: var(--social-canvas) !important;
+}
+
+.dark .desktop-sidebar .sidebar-profile-link,
+.dark .desktop-sidebar .sidebar-nav-link {
+  color: var(--social-text) !important;
+}
+
+.dark .desktop-sidebar .sidebar-nav-link > div,
+.dark .desktop-sidebar .sidebar-nav-link svg {
+  color: var(--social-muted) !important;
+}
+
+.dark .desktop-sidebar .sidebar-nav-link:hover,
+.dark .desktop-sidebar .sidebar-nav-link.is-active,
+.dark .desktop-sidebar .sidebar-nav-link[aria-current='page'] {
+  border-left-color: var(--social-accent) !important;
+  background: var(--social-control) !important;
+  color: var(--social-text) !important;
+}
+
+.dark .desktop-sidebar .sidebar-nav-link.is-active > div,
+.dark .desktop-sidebar .sidebar-nav-link.is-active svg,
+.dark .desktop-sidebar .sidebar-nav-link[aria-current='page'] > div,
+.dark .desktop-sidebar .sidebar-nav-link[aria-current='page'] svg {
+  color: var(--social-accent) !important;
+}
+
+.dark :where(
+  .home-feed-composer-card,
+  .feed-card,
+  .dashboard-rank-panel,
+  .profile-clean__hero,
+  .profile-clean__surface,
+  .profile-clean__tabs,
+  .profile-clean__member-card,
+  .profile-clean__signout-card,
+  .friends-clean__header,
+  .friends-clean__toolbar,
+  .friends-clean__person-card,
+  .friends-clean__empty
+) {
+  border-color: var(--social-border) !important;
+  background: var(--social-surface) !important;
+  color: var(--social-text) !important;
+}
+
+.dark :where(.home-feed-composer-button > span:nth-child(2), .friends-clean__search, .friends-clean__campus select) {
+  background: var(--social-control) !important;
+  color: var(--social-text) !important;
+}

@@ -1,0 +1,19 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "files.watcherExclude": {
+        "**/node_modules/**": true,
+        "**/dist/**": true,
+        "**/build/**": true,
+        "**/.gradle/**": true,
+        "**/.expo/**": true,
+        "frontend/android/**": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/build": true,
+        "**/.gradle": true,
+        "**/.expo": true
+    },
+    "java.compile.nullAnalysis.mode": "automatic"
+}

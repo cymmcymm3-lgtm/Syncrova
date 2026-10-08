@@ -1,0 +1,137 @@
+/*
+ * Kept deliberately small and component-scoped. These class names do not
+ * participate in the older global avatar effects, so developer identity stays
+ * clear instead of looking like a game reward.
+ */
+.sync-developer-avatar {
+  position: relative;
+  z-index: 0;
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  vertical-align: middle;
+  isolation: isolate;
+}
+
+.sync-developer-avatar > :first-child {
+  position: relative;
+  z-index: 1;
+  display: block;
+}
+
+.sync-developer-avatar--verified::before {
+  position: absolute;
+  z-index: 0;
+  inset: -0.19rem;
+  border: 2px solid rgba(224, 247, 255, 0.98);
+  border-radius: 9999px;
+  background: linear-gradient(140deg, #e0f2fe 0%, #38bdf8 45%, #1d4ed8 100%);
+  box-shadow:
+    0 0 0 2px rgba(37, 99, 235, 0.28),
+    0 0 0.78rem rgba(14, 165, 233, 0.5),
+    0 0.42rem 0.92rem rgba(15, 23, 42, 0.2);
+  content: '';
+  pointer-events: none;
+}
+
+.sync-developer-avatar--verified::after {
+  position: absolute;
+  z-index: -1;
+  inset: -0.52rem;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.42) 0%, rgba(37, 99, 235, 0.18) 42%, transparent 72%);
+  content: '';
+  opacity: 0.78;
+  filter: blur(0.34rem);
+  pointer-events: none;
+  animation: sync-developer-aura 2.8s ease-in-out infinite;
+}
+
+.sync-developer-avatar__chip {
+  position: absolute;
+  z-index: 2;
+  right: -0.44rem;
+  bottom: -0.15rem;
+  display: inline-flex;
+  min-height: 1rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.08rem 0.23rem;
+  border: 1.5px solid #fff;
+  border-radius: 9999px;
+  background: #0b57d0;
+  color: #fff;
+  font-size: 0.45rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.015em;
+  box-shadow: 0 0.18rem 0.6rem rgba(11, 87, 208, 0.4);
+  pointer-events: none;
+}
+
+.sync-profile-avatar-trigger {
+  border: 0;
+  line-height: 0;
+}
+
+.sync-profile-avatar-trigger:focus-visible {
+  outline: 3px solid #7dd3fc;
+  outline-offset: 0.28rem;
+}
+
+.sync-developer-badge {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.22rem;
+  min-height: 1.35rem;
+  padding: 0.15rem 0.42rem;
+  border: 1px solid rgba(125, 211, 252, 0.78);
+  border-radius: 9999px;
+  background: #effaff;
+  color: #075985;
+  font-size: 0.65rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(14, 116, 144, 0.12);
+}
+
+.sync-developer-badge svg:last-child {
+  color: #0b57d0;
+}
+
+.sync-developer-badge--compact {
+  display: inline-grid;
+  width: 1.1rem;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  min-height: 1.1rem;
+  padding: 0;
+  place-items: center;
+}
+
+.dark .sync-developer-badge {
+  border-color: rgba(56, 189, 248, 0.38);
+  background: rgba(8, 47, 73, 0.7);
+  color: #dff8ff;
+  box-shadow: 0 1px 7px rgba(14, 165, 233, 0.16);
+}
+
+.dark .sync-developer-avatar--verified::before {
+  border-color: rgba(224, 247, 255, 0.88);
+  box-shadow:
+    0 0 0 2px rgba(14, 165, 233, 0.34),
+    0 0 0.78rem rgba(14, 165, 233, 0.45),
+    0 0.42rem 0.92rem rgba(0, 0, 0, 0.32);
+}
+
+@keyframes sync-developer-aura {
+  0%, 100% { opacity: 0.55; transform: scale(0.96); }
+  50% { opacity: 0.9; transform: scale(1.03); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sync-developer-avatar--verified::after { animation: none; }
+}

@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Syncrova</string>
+    <string name="title_activity_main">Syncrova</string>
+    <string name="package_name">com.nemsu.syncrova</string>
+    <string name="custom_url_scheme">com.nemsu.syncrova</string>
+    <!-- The JavaScript bridge replaces this after sign-in using VITE_BACKEND_URL. -->
+    <string name="syncrova_api_base_url">https://syncrova.invalid/api</string>
+</resources>

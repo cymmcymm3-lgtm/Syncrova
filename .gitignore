@@ -1,4 +1,4 @@
-# Angular specific
+# Build and runtime output
 /dist/
 /out-tsc/
 /tmp/
@@ -6,23 +6,32 @@
 /e2e/test-output/
 /.angular/
 .angular/
+frontend/dist/
+backend/dist/
+backend/uploads/
+.blackbox/
+.tmp/
+*.zip
 
-# Node modules and dependency files
-/node_modules/
+# Dependencies
+node_modules/
 /package-lock.json
 /yarn.lock
 
 # Environment files
-/.env
+.env
+.env.*
+!.env.example
 
-# Angular CLI and build artefacts
+# Tooling and logs
 /.angular-cli.json
 /.ng/
-
-# TypeScript cache
 *.tsbuildinfo
-
-# Logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Native Messenger APKs are generated artifacts. Force-add only verified
+# release builds that stay below GitHub's 100 MB normal Git limit.
+backend/public/releases/syncrova-messenger-*.apk

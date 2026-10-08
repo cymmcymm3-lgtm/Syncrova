@@ -1,0 +1,47 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "data:reset": "node scripts/reset-user-data.js",
+    "admin:set": "node scripts/set-developer-access.js",
+    "account:recover": "node scripts/recover-account.js",
+    "storage:check": "node scripts/check-storage.js",
+    "storage:migrate:r2": "node scripts/migrate-supabase-to-r2.js",
+    "storage:repair:local-r2": "node scripts/repair-local-media-to-r2.js",
+    "backup:plan": "node scripts/backup-plan.js",
+    "db:indexes": "node scripts/create-indexes.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1039.0",
+    "@supabase/supabase-js": "^2.105.1",
+    "bcryptjs": "^3.0.3",
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.5.1",
+    "firebase-admin": "^13.9.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "livekit-server-sdk": "^2.15.2",
+    "mongoose": "^9.5.0",
+    "multer": "^2.1.1",
+    "sharp": "^0.35.5",
+    "socket.io": "^4.8.3",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
