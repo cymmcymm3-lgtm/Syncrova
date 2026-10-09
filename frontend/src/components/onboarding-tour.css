@@ -125,9 +125,253 @@
 .dark .sync-onboarding__footer { border-color: #28425f; }
 
 @media (max-width: 480px) {
-  .sync-onboarding { align-items: end; padding: 0; }
-  .sync-onboarding__card { width: 100%; border-radius: 1.3rem 1.3rem 0 0; }
-  .sync-onboarding__content { min-height: 17rem; }
+  /*
+   * The tour is a complete mobile flow, not a bottom sheet.  Keeping its
+   * header and actions inside the visible viewport means a just-created
+   * account always sees the welcome message and Continue button immediately.
+   */
+  .sync-onboarding {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100svh;
+    min-height: 100dvh;
+    padding:
+      max(.65rem, env(safe-area-inset-top))
+      max(.65rem, env(safe-area-inset-right))
+      max(.65rem, env(safe-area-inset-bottom))
+      max(.65rem, env(safe-area-inset-left));
+    overscroll-behavior: contain;
+  }
+
+  .sync-onboarding__backdrop {
+    backdrop-filter: blur(7px);
+  }
+
+  .sync-onboarding__card {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    width: min(100%, 31rem);
+    height: min(100%, 46rem);
+    max-height: 100%;
+    min-height: 0;
+    border-radius: 1.25rem;
+  }
+
+  .sync-onboarding__header {
+    gap: .65rem;
+    padding: .82rem .88rem;
+  }
+
+  .sync-onboarding__icon {
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: .78rem;
+  }
+
+  .sync-onboarding__header p {
+    font-size: .67rem;
+  }
+
+  .sync-onboarding__progress {
+    margin-top: .32rem;
+  }
+
+  .sync-onboarding__progress span {
+    width: min(1.48rem, 12vw);
+  }
+
+  .sync-onboarding__close,
+  .sync-onboarding__back {
+    width: 2.65rem;
+    height: 2.65rem;
+    border-radius: .82rem;
+  }
+
+  .sync-onboarding__content {
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: clamp(1.05rem, 4vw, 1.35rem) clamp(.95rem, 4vw, 1.25rem) 1rem;
+  }
+
+  .sync-onboarding__content--welcome {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .sync-onboarding__content h2 {
+    max-width: 20rem;
+    font-size: clamp(1.32rem, 6.7vw, 1.64rem);
+    line-height: 1.12;
+  }
+
+  .sync-onboarding__content > p {
+    margin-top: .58rem;
+    font-size: .89rem;
+    line-height: 1.48;
+  }
+
+  .sync-onboarding__welcome-grid {
+    gap: .42rem;
+    margin-top: 1.1rem;
+  }
+
+  .sync-onboarding__welcome-grid span {
+    min-height: 4.55rem;
+    gap: .28rem;
+    border-radius: .78rem;
+    padding: .42rem .22rem;
+    font-size: .64rem;
+    line-height: 1.16;
+  }
+
+  .sync-onboarding__welcome-grid svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+
+  .sync-onboarding__profile-card {
+    min-height: 4.3rem;
+    margin-top: 1.05rem;
+    padding: .86rem;
+  }
+
+  .sync-onboarding__suggestions {
+    gap: .45rem;
+    margin-top: 1rem;
+  }
+
+  .sync-onboarding__suggestion {
+    min-height: 3.8rem;
+    padding: .52rem;
+  }
+
+  .sync-onboarding__suggestion-avatar {
+    width: 2.18rem;
+    height: 2.18rem;
+  }
+
+  .sync-onboarding__suggestion button {
+    min-width: 4.2rem;
+    min-height: 2.35rem;
+    padding: .45rem .56rem;
+  }
+
+  .sync-onboarding__destinations {
+    gap: .46rem;
+    margin-top: 1rem;
+  }
+
+  .sync-onboarding__destinations button {
+    min-height: 2.85rem;
+    padding: .68rem .75rem;
+  }
+
+  .sync-onboarding__footer {
+    min-height: 4.2rem;
+    flex: 0 0 auto;
+    padding: .7rem .88rem max(.7rem, env(safe-area-inset-bottom));
+  }
+
+  .sync-onboarding__quiet {
+    min-height: 2.65rem;
+    padding: .32rem 0;
+  }
+
+  .sync-onboarding__next {
+    min-height: 2.65rem;
+    padding: .65rem .86rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .sync-onboarding {
+    padding:
+      max(.4rem, env(safe-area-inset-top))
+      max(.4rem, env(safe-area-inset-right))
+      max(.4rem, env(safe-area-inset-bottom))
+      max(.4rem, env(safe-area-inset-left));
+  }
+
+  .sync-onboarding__header {
+    padding: .7rem .75rem;
+  }
+
+  .sync-onboarding__content {
+    padding: .9rem .82rem .82rem;
+  }
+
+  .sync-onboarding__footer {
+    gap: .45rem;
+    padding-inline: .75rem;
+  }
+
+  .sync-onboarding__quiet {
+    font-size: .72rem;
+  }
+}
+
+/* Width is not a reliable phone signal after rotation: modern phones are
+ * often 760px+ wide in landscape.  Constrain the dialog by its short height
+ * so Welcome and its primary action remain in the visible viewport. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .sync-onboarding {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100svh;
+    min-height: 100dvh;
+    padding: max(.45rem, env(safe-area-inset-top)) max(.75rem, env(safe-area-inset-right)) max(.45rem, env(safe-area-inset-bottom)) max(.75rem, env(safe-area-inset-left));
+  }
+
+  .sync-onboarding__card {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    width: min(100%, 36rem);
+    height: calc(100dvh - .9rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    max-height: 100%;
+    min-height: 0;
+    max-width: 36rem;
+    border-radius: 1rem;
+  }
+
+  .sync-onboarding__header {
+    padding-block: .58rem;
+  }
+
+  .sync-onboarding__icon {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .sync-onboarding__content {
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-block: .75rem;
+  }
+
+  .sync-onboarding__welcome-grid span {
+    min-height: 3.55rem;
+  }
+
+  .sync-onboarding__footer {
+    min-height: 3.55rem;
+    padding-block: .45rem;
+  }
+
+  .sync-onboarding__quiet,
+  .sync-onboarding__next,
+  .sync-onboarding__back {
+    min-height: 2.25rem;
+    height: 2.25rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

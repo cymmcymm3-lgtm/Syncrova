@@ -1575,7 +1575,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
   );
 
   return (
-    <div className={`portal-shell text-slate-900 dark:text-slate-100 ${isDashboardRoute && dashboardHeaderHidden ? 'portal-shell--dashboard-header-hidden' : ''}`}>
+    <div className={`portal-shell mobile-app-shell text-slate-900 dark:text-slate-100 ${isDashboardRoute && dashboardHeaderHidden ? 'portal-shell--dashboard-header-hidden' : ''}`}>
       <header className="desktop-topbar fixed inset-x-0 top-0 z-40 hidden h-16 items-center justify-between bg-[#07036f] px-5 text-white shadow-lg shadow-[#07036f]/20 dark:bg-[#050505] dark:shadow-black/35 md:flex">
         <div className="flex min-w-0 items-center gap-3">
           <AppLogoMark size="xs" className="rounded-full bg-white p-1 shadow-none ring-1 ring-white/25" />
@@ -1661,9 +1661,9 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
 
       </aside>
 
-      <div className="layout-content-frame flex min-h-0 flex-col md:ml-72 md:pt-16">
+      <div className="layout-content-frame mobile-layout-content-frame flex min-h-0 flex-col md:ml-72 md:pt-16">
         {!hideMobileTopbar && (
-          <header className={`mobile-topbar ${useFacebookMobileHome ? 'mobile-home-topbar' : ''} sticky top-0 z-20 flex items-center justify-between border-b border-white/10 bg-[#07036f] text-white shadow-lg shadow-[#07036f]/20 dark:bg-[#050505] dark:shadow-black/35 md:hidden`}>
+          <header className={`mobile-topbar mobile-app-bar ${useFacebookMobileHome ? 'mobile-home-topbar mobile-app-bar--home' : 'mobile-app-bar--section'} sticky top-0 z-20 flex items-center justify-between border-b border-white/10 bg-[#07036f] text-white shadow-lg shadow-[#07036f]/20 dark:bg-[#050505] dark:shadow-black/35 md:hidden`}>
             {useFacebookMobileHome ? (
               <>
                 <div className="mobile-home-topbar-title min-w-0">
@@ -1672,6 +1672,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                     onClick={() => setSidebarOpen(true)}
                     className="mobile-home-menu-button"
                     aria-label="Open menu"
+                    aria-expanded={sidebarOpen}
                   >
                     <Menu size={24} />
                   </button>
@@ -1684,7 +1685,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                     <AppLogoMark size="xs" className="mobile-home-brand-logo" />
                     <span className="mobile-home-brand-copy">
                       <AppWordmark size="sm" className="mobile-home-wordmark" />
-                      <span>Made by Sigma Boyz</span>
+                      <span>Campus network</span>
                     </span>
                   </button>
                 </div>
@@ -1745,6 +1746,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                     onClick={() => setSidebarOpen(true)}
                     className="mobile-topbar-action grid h-9 w-9 place-items-center overflow-hidden rounded-full bg-white/10 text-white ring-1 ring-white/15 transition active:scale-95"
                     aria-label="Open menu"
+                    aria-expanded={sidebarOpen}
                   >
                     {user && avatarSrc ? (
                       <img src={avatarSrc} alt={user.name} className="h-full w-full object-cover" />
@@ -1827,7 +1829,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
 
         <div className="flex min-h-0 flex-1">
           <main
-            className={`app-main min-w-0 flex-1 overflow-x-hidden overflow-y-auto ${isCompactRoute ? 'app-main--compact' : ''} ${mobileChatRouteOpen ? 'app-main--mobile-chat-open' : ''} ${showFacebookMobileTabs ? 'app-main--mobile-top-tabs' : ''} ${useFacebookMobileHome ? 'app-main--mobile-fb-home' : ''}`}
+            className={`app-main min-w-0 flex-1 overflow-x-hidden overflow-y-auto ${isCompactRoute ? 'app-main--compact' : ''} ${mobileChatRouteOpen ? 'app-main--mobile-chat-open' : ''} ${showFacebookMobileTabs ? 'app-main--mobile-top-tabs' : ''} ${useFacebookMobileHome ? 'app-main--mobile-fb-home' : ''} ${!hideMobileBottomNav ? 'app-main--with-mobile-dock' : ''}`}
             onScroll={handleAppMainScroll}
             onTouchStart={handleAppTouchStart}
             onTouchMove={handleAppTouchMove}
@@ -1850,7 +1852,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
         </div>
 
         {!hideMobileBottomNav && (
-        <nav className="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-20 border-t border-slate-200 bg-white/92 shadow-2xl shadow-slate-300/35 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/92 dark:shadow-black/30 md:hidden" style={mobileTabStyle}>
+        <nav className="mobile-bottom-nav mobile-primary-dock fixed bottom-0 left-0 right-0 z-20 border-t border-slate-200 bg-white/92 shadow-2xl shadow-slate-300/35 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/92 dark:shadow-black/30 md:hidden" style={mobileTabStyle} aria-label="Primary navigation">
           {mobileBottomItems.map(item => {
             const isActive = isNavItemActive(item.path);
             const isMessages = item.path === '/messages';
@@ -1861,8 +1863,9 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                 key={item.path}
                 to={item.path}
                 data-sound="tab"
-                className={`mobile-nav-item relative flex flex-col items-center justify-center gap-0.5 ${isActive ? 'is-active' : ''}`}
+                className={`mobile-nav-item mobile-primary-dock-item relative flex flex-col items-center justify-center gap-0.5 ${isActive ? 'is-active' : ''}`}
                 aria-label={item.label}
+                aria-current={isActive ? 'page' : undefined}
               >
                 <item.icon size={21} strokeWidth={isActive ? 2.6 : 2.2} />
                 <span className="max-w-full truncate text-[10px] font-black leading-none">{item.mobileLabel || item.label}</span>
@@ -2183,10 +2186,14 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
           <>
             <div
               className="mobile-sidebar-backdrop fixed inset-0 z-[88] bg-black/50 md:hidden"
+              aria-hidden="true"
               onClick={() => setSidebarOpen(false)}
             />
             <aside
-              className="mobile-sidebar-drawer fixed bottom-0 left-0 top-0 z-[100] w-[min(86vw,20rem)] border-r border-slate-200 bg-white text-slate-900 shadow-2xl shadow-gray-950/20 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 md:hidden"
+              className="mobile-sidebar-drawer mobile-navigation-drawer fixed bottom-0 left-0 top-0 z-[100] w-[min(86vw,20rem)] border-r border-slate-200 bg-white text-slate-900 shadow-2xl shadow-gray-950/20 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 md:hidden"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Navigation menu"
             >
               <div className="mobile-sidebar-header flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-800">
                 <BrandLogo mobile />

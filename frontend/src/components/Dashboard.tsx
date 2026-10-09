@@ -734,7 +734,7 @@ export default function Dashboard() {
   const userAvatarUrl = resolveMediaUrl(user?.avatar);
 
   const renderStoryPanel = ({ mobile = false } = {}) => (
-  <section className={`dashboard-story-panel ${mobile ? 'dashboard-story-panel--fb-mobile dashboard-story-panel--fb-copy' : ''} rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/55 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20`}>
+  <section className={`dashboard-story-panel ${mobile ? 'dashboard-story-panel--fb-mobile dashboard-story-panel--fb-copy' : ''} ${mobile && storyRail.length === 0 ? 'dashboard-story-panel--sparse' : ''} rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/55 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20`}>
     {!mobile && (
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>

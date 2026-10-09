@@ -116,4 +116,158 @@
 @media (max-width: 1050px) { .sv-auth-main { gap: 38px; } .sv-auth-shell { padding: 0 28px; } .sv-auth-showcase { padding: 36px 28px 26px; } .sv-auth-showcase h2 { font-size: 37px; } .sv-auth-note { left: -10px; padding: 12px; } .sv-auth-connect-note { left: -14px; padding: 12px; } .sv-auth-showcase-footer { gap: 17px; } }
 @media (max-width: 820px) { .sv-auth-shell { max-width: 600px; padding: 0 28px; } .sv-auth-header { min-height: 90px; } .sv-auth-header-action > span { display: none; } .sv-auth-main { display: block; padding-top: 27px; padding-bottom: 28px; } .sv-auth-showcase { display: none; } .sv-auth-form-panel { max-width: 420px; padding: 20px 0; } .sv-auth-footer > span:last-child { display: none; } .sv-auth-header-action a { font-size: 11px; padding: 9px 12px; } .sv-auth-brand { font-size: 23px; } .sv-auth-brand img { width: 37px; height: 37px; } }
 @media (max-width: 480px) { .sv-auth-shell { padding: 0 24px; } .sv-auth-header { min-height: 81px; } .sv-auth-main { padding-top: 24px; } .sv-auth-form-panel h1 { font-size: 31px; } .sv-auth-form-icon { margin-bottom: 23px; } .sv-auth-input-wrap input, .sv-auth-input-wrap select { font-size: 16px; } .sv-auth-input-wrap select { font-size: 14px; } .sv-auth-field-row { grid-template-columns: 1fr; gap: 16px; } .sv-auth-dialog { padding: 24px; } .sv-auth-footer { min-height: 61px; font-size: 9px; } }
+
+/* Phone-first auth layout: keep the important action above the fold without
+   wasting vertical space, while making every control easy to use one-handed. */
+@media (max-width: 600px) {
+  .sv-auth {
+    min-height: 100vh;
+    min-height: 100dvh;
+    height: auto;
+    background-color: #fff;
+    background-image: linear-gradient(180deg, #edf8ff 0, #f8fbff 190px, #fff 430px);
+    overscroll-behavior-y: contain;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .sv-auth-shell {
+    width: 100%;
+    min-height: 100dvh;
+    max-width: 520px;
+    padding: max(0px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  }
+
+  .sv-auth-header {
+    min-height: 70px;
+    padding: 8px 0 6px;
+    gap: 8px;
+  }
+
+  .sv-auth-brand {
+    gap: 8px;
+    font-size: 20px;
+    letter-spacing: -0.8px;
+  }
+
+  .sv-auth-brand img { width: 34px; height: 34px; }
+  .sv-auth-header-action { gap: 0; flex: 0 0 auto; }
+  .sv-auth-header-action a {
+    min-height: 42px;
+    padding: 0 10px;
+    gap: 6px;
+    border-radius: 11px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .sv-auth-main {
+    display: block;
+    flex: 0 0 auto;
+    padding: 10px 0 18px;
+  }
+
+  .sv-auth-showcase { display: none; }
+
+  .sv-auth-form-panel,
+  .sv-auth--register .sv-auth-form-panel {
+    max-width: none;
+    margin: 0;
+    padding: 22px 19px 24px;
+    border: 1px solid #dcebf6;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 14px 32px rgba(53, 112, 153, 0.10);
+  }
+
+  .sv-auth-form-icon {
+    width: 42px;
+    height: 42px;
+    margin: 0 0 16px;
+    border-radius: 12px;
+  }
+
+  .sv-auth-form-panel h1 {
+    margin-bottom: 8px;
+    font-size: clamp(27px, 8vw, 31px);
+    letter-spacing: -1.15px;
+    line-height: 1.14;
+  }
+
+  .sv-auth-description { max-width: 34ch; font-size: 13px; line-height: 1.6; }
+  .sv-auth-desktop-break { display: none; }
+  .sv-auth-form,
+  .sv-auth--register .sv-auth-form { margin-top: 23px; gap: 16px; }
+  .sv-auth-field > label { margin-bottom: 7px; }
+  .sv-auth-input-wrap input,
+  .sv-auth-input-wrap select,
+  .sv-auth-input-wrap select { height: 52px; border-radius: 11px; font-size: 16px; }
+  .sv-auth-password-toggle { top: 5px; right: 5px; width: 42px; height: 42px; }
+  .sv-auth-field-row { grid-template-columns: 1fr; gap: 16px; }
+  .sv-auth-hint { margin-top: 6px; }
+  .sv-auth-forgot-row { margin-top: -4px; }
+  .sv-auth-submit { height: 52px; border-radius: 11px; font-size: 14px; }
+  .sv-auth-error { margin-top: 14px; padding: 10px 11px; }
+  .sv-auth-divider { margin: 22px 0 18px; gap: 12px; }
+  .sv-auth-switch { font-size: 13px; }
+  .sv-auth-trust { margin-top: 18px; line-height: 1.45; }
+  .sv-auth-admin { padding-top: 12px; }
+  .sv-auth--register .sv-auth-switch { margin-top: 19px; }
+  .sv-auth-footer { display: none; }
+
+  .sv-auth-dialog {
+    width: min(460px, calc(100% - 20px));
+    max-height: calc(100dvh - 20px);
+    padding: 22px 18px max(22px, env(safe-area-inset-bottom));
+    border-radius: 18px;
+  }
+
+  .sv-auth-dialog h2 { margin-bottom: 7px; font-size: 23px; }
+  .sv-auth-dialog .sv-auth-form { margin-top: 20px; }
+  .sv-auth-dialog-close { width: 42px; height: 42px; margin: -5px -5px 0 0; }
+  .sv-auth-dialog-footer { align-items: flex-start; flex-direction: column; gap: 12px; margin-top: 20px; }
+  .sv-auth-reset-account { margin-top: 15px; padding: 10px; }
+}
+
+@media (max-width: 360px) {
+  .sv-auth-shell { padding-inline: 12px; }
+  .sv-auth-header { min-height: 64px; }
+  .sv-auth-brand { font-size: 18px; }
+  .sv-auth-brand img { width: 31px; height: 31px; }
+  .sv-auth-header-action a { min-height: 39px; padding-inline: 9px; font-size: 10.5px; }
+  .sv-auth-header-action a svg { display: none; }
+  .sv-auth-form-panel,
+  .sv-auth--register .sv-auth-form-panel { padding: 19px 15px 22px; border-radius: 18px; }
+  .sv-auth-form-panel h1 { font-size: 27px; }
+  .sv-auth-description { font-size: 12px; }
+}
+
+/* Short screens should begin with the form, not a blank vertical gap. */
+@media (max-width: 600px) and (max-height: 700px) {
+  .sv-auth-header { min-height: 60px; padding-top: 4px; }
+  .sv-auth-main { padding-top: 5px; padding-bottom: 12px; }
+  .sv-auth-form-panel,
+  .sv-auth--register .sv-auth-form-panel { padding: 16px 16px 20px; }
+  .sv-auth-form-icon { width: 38px; height: 38px; margin-bottom: 11px; }
+  .sv-auth-form-panel h1 { margin-bottom: 6px; font-size: 27px; }
+  .sv-auth-description { font-size: 12px; line-height: 1.5; }
+  .sv-auth-form,
+  .sv-auth--register .sv-auth-form { margin-top: 18px; gap: 13px; }
+  .sv-auth-field > label { margin-bottom: 6px; }
+  .sv-auth-input-wrap input,
+  .sv-auth-input-wrap select,
+  .sv-auth-input-wrap select { height: 48px; }
+  .sv-auth-password-toggle { top: 3px; right: 3px; }
+  .sv-auth-submit { height: 48px; }
+  .sv-auth-divider { margin: 18px 0 15px; }
+  .sv-auth-trust { margin-top: 15px; }
+}
+
+/* A phone held sideways must use the compact single-column experience too. */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 540px) {
+  .sv-auth-shell { max-width: 680px; padding-inline: max(18px, env(safe-area-inset-left)); }
+  .sv-auth-main { display: block; }
+  .sv-auth-showcase { display: none; }
+  .sv-auth-form-panel,
+  .sv-auth--register .sv-auth-form-panel { max-width: 620px; margin: 0 auto; }
+}
 @media (prefers-reduced-motion: reduce) { .sv-auth *, .sv-auth-dialog * { animation: none !important; transition: none !important; } }

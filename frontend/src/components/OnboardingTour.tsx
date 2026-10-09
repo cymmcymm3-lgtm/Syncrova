@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, ArrowRight, Check, Compass, Gamepad2, Loader2, MessageCircle, Sparkles, UserRound, UserPlus, UsersRound, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import api from '../services/api';
 import { resolveMediaUrl } from '../utils/media';
 import './onboarding-tour.css';
@@ -93,7 +94,7 @@ export default function OnboardingTour({ user }: { user: any }) {
 
   useEffect(() => {
     if (!open) return undefined;
-    const frame = window.requestAnimationFrame(() => closeButtonRef.current?.focus());
+    const frame = window.requestAnimationFrame(() => closeButtonRef.current?.focus({ preventScroll: true }));
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') dismiss();
     };
@@ -103,6 +104,30 @@ export default function OnboardingTour({ user }: { user: any }) {
       window.removeEventListener('keydown', onKeyDown);
     };
   }, [dismiss, open]);
+
+  // Keep the tour anchored to the visible mobile viewport. Without this, a
+  // focused control or a touch scroll can move the dashboard behind the dialog
+  // and make the first welcome screen appear to start part-way down the page.
+  useEffect(() => {
+    if (!open) return undefined;
+    const body = document.body;
+    const root = document.documentElement;
+    const previous = {
+      bodyOverflow: body.style.overflow,
+      bodyOverscroll: body.style.overscrollBehavior,
+      rootOverscroll: root.style.overscrollBehavior
+    };
+
+    body.style.overflow = 'hidden';
+    body.style.overscrollBehavior = 'none';
+    root.style.overscrollBehavior = 'none';
+
+    return () => {
+      body.style.overflow = previous.bodyOverflow;
+      body.style.overscrollBehavior = previous.bodyOverscroll;
+      root.style.overscrollBehavior = previous.rootOverscroll;
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open || step !== 2 || suggestionsLoaded || loadingSuggestions) return;
@@ -195,10 +220,10 @@ export default function OnboardingTour({ user }: { user: any }) {
   const active = steps[step];
   const Icon = active.icon;
 
-  return (
+  return createPortal(
     <div className="sync-onboarding" role="dialog" aria-modal="true" aria-labelledby="sync-onboarding-title">
       <div className="sync-onboarding__backdrop" aria-hidden="true" />
-      <section className="sync-onboarding__card" onMouseDown={event => event.stopPropagation()}>
+      <section className="sync-onboarding__card" data-step={step + 1} onMouseDown={event => event.stopPropagation()}>
         <header className="sync-onboarding__header">
           <span className="sync-onboarding__icon"><Icon size={21} /></span>
           <div className="min-w-0 flex-1">
@@ -210,7 +235,7 @@ export default function OnboardingTour({ user }: { user: any }) {
           <button ref={closeButtonRef} type="button" className="sync-onboarding__close" onClick={dismiss} aria-label="Skip welcome tour for this session" title="Skip for now"><X size={18} /></button>
         </header>
 
-        <main className="sync-onboarding__content" key={step}>
+        <main className={`sync-onboarding__content${step === 0 ? ' sync-onboarding__content--welcome' : ''}`} key={step}>
           <h2 id="sync-onboarding-title">{active.title}</h2>
           <p>{active.description}</p>
 
@@ -270,6 +295,7 @@ export default function OnboardingTour({ user }: { user: any }) {
           </span>
         </footer>
       </section>
-    </div>
+    </div>,
+    document.body
   );
 }

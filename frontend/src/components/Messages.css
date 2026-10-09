@@ -468,3 +468,172 @@
   background: rgba(2, 6, 23, 0.58) !important;
   box-shadow: none !important;
 }
+
+/* Phone inbox and conversation polish.  These rules intentionally stay in
+ * the message route so they do not alter the shared header or bottom tab bar. */
+@media (max-width: 767px) {
+  .messages-pro-shell.messages-clean-shell.mobile-messenger-shell {
+    min-height: min(42rem, calc(100dvh - 4.6rem - env(safe-area-inset-bottom, 0px))) !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .messages-clean-shell .messages-clean-layout,
+  .messages-clean-shell .messages-clean-list,
+  .messages-clean-shell .messages-clean-thread-panel {
+    min-height: 0;
+  }
+
+  .messages-clean-shell .messages-clean-list-header {
+    padding: 0.85rem 0.9rem 0.7rem !important;
+  }
+
+  .messages-clean-shell .messages-mobile-hero {
+    margin-bottom: 0.75rem !important;
+  }
+
+  .messages-clean-shell .messages-mobile-hero .messages-mobile-action-button {
+    width: 2.7rem;
+    height: 2.7rem;
+    border-radius: 0.9rem;
+  }
+
+  .messages-clean-shell .messages-search-input {
+    min-height: 2.7rem;
+    padding-block: 0.5rem !important;
+  }
+
+  .messages-clean-shell .messages-filter-tabs {
+    width: calc(100% + 0.2rem);
+    margin: 0.65rem -0.1rem -0.08rem;
+    padding: 0.1rem;
+    overflow-x: auto;
+    scroll-padding-inline: 0.1rem;
+    scroll-snap-type: x proximity;
+  }
+
+  .messages-clean-shell .messages-filter-tab {
+    min-height: 2.35rem;
+    flex: 0 0 auto;
+    padding-inline: 0.72rem !important;
+    scroll-snap-align: start;
+  }
+
+  .messages-clean-shell .messages-clean-conversation-scroll {
+    padding: 0.55rem 0.65rem calc(0.8rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .messages-clean-shell .conversation-list-row {
+    min-height: 5.3rem;
+    margin-bottom: 0.35rem !important;
+    padding: 0.78rem !important;
+    border: 1px solid rgba(148, 163, 184, 0.19) !important;
+    border-radius: 1rem !important;
+    box-shadow: 0 0.3rem 0.9rem rgba(15, 23, 42, 0.035) !important;
+  }
+
+  .messages-clean-shell .conversation-list-row[class*='bg-blue-50'],
+  .messages-clean-shell .conversation-list-row[class*='bg-blue-950'] {
+    border-color: rgba(24, 119, 242, 0.2) !important;
+  }
+
+  .messages-clean-shell .messages-clean-thread-header {
+    min-height: 4rem;
+    padding: 0.62rem 0.72rem !important;
+  }
+
+  /* Leave the contact name useful instead of sacrificing it to four desktop-
+   * sized icon controls in the conversation header. */
+  .messages-clean-shell .mobile-chat-header .mobile-chat-icon-button {
+    width: 2.3rem !important;
+    height: 2.3rem !important;
+    min-width: 2.3rem !important;
+  }
+
+  .messages-clean-shell .mobile-chat-header .mobile-chat-avatar [class*='h-12'][class*='w-12'] {
+    width: 2.62rem !important;
+    height: 2.62rem !important;
+  }
+
+  .messages-clean-shell .mobile-chat-header .mobile-chat-call-actions {
+    gap: 0.22rem !important;
+  }
+
+  .messages-clean-shell .messages-clean-thread-search {
+    padding: 0.38rem 0.65rem !important;
+  }
+
+  .messages-clean-shell .messages-clean-thread {
+    padding: 0.75rem 0.72rem !important;
+    overscroll-behavior: contain;
+  }
+
+  .messages-clean-shell .messages-clean-composer {
+    padding: 0.55rem 0.65rem calc(0.55rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .messages-clean-shell .message-composer-grid {
+    gap: 0.36rem !important;
+  }
+
+  .messages-clean-shell .message-composer-action,
+  .messages-clean-shell .message-composer-send {
+    width: 2.48rem !important;
+    height: 2.48rem !important;
+    min-width: 2.48rem !important;
+  }
+
+  .messages-clean-shell .message-composer-input {
+    min-height: 2.48rem !important;
+    padding-inline: 0.75rem !important;
+    font-size: 0.92rem !important;
+  }
+
+  .messages-clean-shell.is-conversation-open .messages-clean-thread-panel {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 374px) {
+  .messages-clean-shell .messages-clean-list-header {
+    padding-inline: 0.65rem !important;
+  }
+
+  .messages-clean-shell .messages-mobile-hero .messages-mobile-action-button {
+    width: 2.45rem;
+    height: 2.45rem;
+  }
+
+  .messages-clean-shell .messages-filter-tab {
+    padding-inline: 0.62rem !important;
+    font-size: 0.68rem !important;
+  }
+
+  .messages-clean-shell .messages-clean-conversation-scroll {
+    padding-inline: 0.48rem !important;
+  }
+
+  .messages-clean-shell .conversation-list-row {
+    padding: 0.7rem !important;
+  }
+
+  .messages-clean-shell .messages-clean-thread-header,
+  .messages-clean-shell .messages-clean-thread,
+  .messages-clean-shell .messages-clean-composer {
+    padding-inline: 0.5rem !important;
+  }
+
+  .messages-clean-shell .mobile-chat-header .mobile-chat-icon-button {
+    width: 2.12rem !important;
+    height: 2.12rem !important;
+    min-width: 2.12rem !important;
+  }
+
+  .messages-clean-shell .message-composer-action,
+  .messages-clean-shell .message-composer-send {
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+    min-width: 2.25rem !important;
+  }
+}
