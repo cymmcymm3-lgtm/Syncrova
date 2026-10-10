@@ -76,7 +76,7 @@ function Avatar({ user, size = 'h-14 w-14' }) {
   const avatar = resolveMediaUrl(user?.avatar);
   return (
     <span className={`${size} grid shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-[#0b57d0] to-[#2387a8] text-lg font-black text-white`}>
-      {avatar ? <img src={avatar} alt={user?.name || 'User'} className="h-full w-full object-cover" /> : (user?.name || 'U').charAt(0).toUpperCase()}
+      {avatar ? <img src={avatar} alt={user?.name || 'User'} decoding="async" className="h-full w-full object-cover" /> : (user?.name || 'U').charAt(0).toUpperCase()}
     </span>
   );
 }
@@ -808,6 +808,7 @@ export default function Dashboard() {
                     src={userAvatarUrl}
                     alt="Your story background"
                     decoding="async"
+                      sizes="128px"
                     className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105"
                     onError={(event) => { event.currentTarget.style.display = 'none'; }}
                   />
@@ -859,6 +860,8 @@ export default function Dashboard() {
                         alt={owner.name || 'Story'}
                         loading="lazy"
                         decoding="async"
+                        fetchPriority="low"
+                        sizes="128px"
                         className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                       />
                     ) : (
@@ -872,7 +875,7 @@ export default function Dashboard() {
                     <div className={`rounded-full p-[3px] ${seen ? 'bg-white/50' : 'bg-gradient-to-r from-[#b721ff] to-[#21d4fd]'}`}>
                       <div className="h-9 w-9 overflow-hidden rounded-full border-[2px] border-white bg-slate-300">
                         {ownerAvatar ? (
-                          <img src={ownerAvatar} alt={owner.name || 'User'} className="h-full w-full object-cover" />
+                          <img src={ownerAvatar} alt={owner.name || 'User'} loading="lazy" decoding="async" fetchPriority="low" sizes="36px" className="h-full w-full object-cover" />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0866ff] to-[#2387a8] text-base font-black text-white">
                             {owner.name?.charAt(0)?.toUpperCase() || 'U'}

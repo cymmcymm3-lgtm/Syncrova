@@ -286,6 +286,10 @@ const isDocumentVisible = () => (
   typeof document === 'undefined' || document.visibilityState === 'visible'
 );
 
+const isNetworkAvailable = () => (
+  typeof navigator === 'undefined' || navigator.onLine !== false
+);
+
 const triggerMobileHaptic = (duration = 10) => {
   if (typeof navigator === 'undefined' || !isMobileViewport()) return;
   navigator.vibrate?.(duration);
@@ -575,8 +579,11 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
     if (!user) return undefined;
 
     let cancelled = false;
+    let inFlight = false;
+    let timerId: number | null = null;
     const loadBadges = async () => {
-      if (!isDocumentVisible()) return;
+      if (!isDocumentVisible() || !isNetworkAvailable() || inFlight) return;
+      inFlight = true;
       try {
         const [messageRes, friendRes] = await Promise.all([
           api.get('/messages/conversations').catch(() => ({ data: [] })),
@@ -588,22 +595,57 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
         setFriendBadgeCount((friendRes.data?.incoming || []).length);
       } catch (err) {
         console.error('Badge sync failed', err);
+      } finally {
+        inFlight = false;
       }
     };
 
-    loadBadges();
-    const interval = setInterval(loadBadges, 30000);
-    const friendsHandler = () => loadBadges();
-    const visibilityHandler = () => {
-      if (isDocumentVisible()) loadBadges();
+    const clearScheduledRefresh = () => {
+      if (timerId !== null) {
+        window.clearTimeout(timerId);
+        timerId = null;
+      }
     };
+    const scheduleRefresh = () => {
+      clearScheduledRefresh();
+      if (cancelled || !isDocumentVisible() || !isNetworkAvailable()) return;
+      timerId = window.setTimeout(async () => {
+        if (cancelled) return;
+        await loadBadges();
+        if (cancelled) return;
+        scheduleRefresh();
+      }, 60000);
+    };
+    const friendsHandler = (event) => {
+      // The socket handler has already refreshed the friend count below.
+      // Avoid repeating its full conversations + friends request pair.
+      if (event?.detail?.badgesRefreshed) return;
+      void loadBadges();
+    };
+    const visibilityHandler = () => {
+      if (isDocumentVisible()) {
+        void loadBadges();
+        scheduleRefresh();
+      } else {
+        clearScheduledRefresh();
+      }
+    };
+    const onlineHandler = () => {
+      void loadBadges();
+      scheduleRefresh();
+    };
+
+    void loadBadges();
+    scheduleRefresh();
     window.addEventListener('friendsUpdated', friendsHandler);
+    window.addEventListener('online', onlineHandler);
     document.addEventListener('visibilitychange', visibilityHandler);
 
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      clearScheduledRefresh();
       window.removeEventListener('friendsUpdated', friendsHandler);
+      window.removeEventListener('online', onlineHandler);
       document.removeEventListener('visibilitychange', visibilityHandler);
     };
   }, [user]);
@@ -617,7 +659,9 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
       api.get('/friends/summary')
         .then(res => setFriendBadgeCount((res.data?.incoming || []).length))
         .catch(() => {});
-      window.dispatchEvent(new CustomEvent('friendsUpdated'));
+      window.dispatchEvent(new CustomEvent('friendsUpdated', {
+        detail: { badgesRefreshed: true, source: 'socket' }
+      }));
     };
 
     socket.on('friend-request-updated', refreshFriends);
@@ -628,28 +672,63 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
     if (!user) return undefined;
 
     let cancelled = false;
-    const loadNotifications = async () => {
-      if (!isDocumentVisible()) return;
+    let inFlight = false;
+    let timerId: number | null = null;
+    const loadNotificationSummary = async () => {
+      if (!isDocumentVisible() || !isNetworkAvailable() || inFlight) return;
+      inFlight = true;
       try {
-        const res = await api.get('/notifications');
+        // The header only needs the two compact badge signals. Keeping the
+        // full notification feed for the on-demand panel avoids reloading a
+        // potentially long list every few seconds on a phone.
+        const res = await api.get('/notifications/unread-count');
         if (cancelled) return;
-        const incoming = res.data?.notifications || [];
-        setNotifications(normalizeNotificationFeed(incoming));
-        setNotificationUnreadSummary(getVisibleNotificationUnreadSummary(incoming, res.data?.unreadSummary));
+        const summary = normalizeNotificationUnreadSummary(res.data?.unreadSummary);
+        if (summary) setNotificationUnreadSummary(summary);
       } catch {
         // Notification center is non-blocking.
+      } finally {
+        inFlight = false;
       }
     };
 
-    loadNotifications();
-    const interval = setInterval(loadNotifications, 45000);
-    const visibilityHandler = () => {
-      if (isDocumentVisible()) loadNotifications();
+    const clearScheduledRefresh = () => {
+      if (timerId !== null) {
+        window.clearTimeout(timerId);
+        timerId = null;
+      }
     };
+    const scheduleRefresh = () => {
+      clearScheduledRefresh();
+      if (cancelled || !isDocumentVisible() || !isNetworkAvailable()) return;
+      timerId = window.setTimeout(async () => {
+        if (cancelled) return;
+        await loadNotificationSummary();
+        if (cancelled) return;
+        scheduleRefresh();
+      }, 60000);
+    };
+    const visibilityHandler = () => {
+      if (isDocumentVisible()) {
+        void loadNotificationSummary();
+        scheduleRefresh();
+      } else {
+        clearScheduledRefresh();
+      }
+    };
+    const onlineHandler = () => {
+      void loadNotificationSummary();
+      scheduleRefresh();
+    };
+
+    void loadNotificationSummary();
+    scheduleRefresh();
+    window.addEventListener('online', onlineHandler);
     document.addEventListener('visibilitychange', visibilityHandler);
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      clearScheduledRefresh();
+      window.removeEventListener('online', onlineHandler);
       document.removeEventListener('visibilitychange', visibilityHandler);
     };
   }, [user]);

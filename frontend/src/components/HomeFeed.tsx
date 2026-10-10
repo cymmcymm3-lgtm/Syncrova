@@ -138,11 +138,25 @@ const isTouchFeedViewport = () => (
   && window.matchMedia?.('(max-width: 767px), (pointer: coarse)').matches
 );
 
+// Do not start decoding a long queue of offscreen feed media on slower phones.
+// The normal margin still keeps scrolling feeling instant, while Data Saver and
+// slower connections only fetch media shortly before it is needed.
+const getTouchMediaRootMargin = (rootMargin = '900px') => {
+  if (!isTouchFeedViewport() || typeof navigator === 'undefined') return rootMargin;
+
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const effectiveType = String(connection?.effectiveType || '').toLowerCase();
+  if (connection?.saveData || effectiveType === 'slow-2g' || effectiveType === '2g') return '140px 0px';
+  if (effectiveType === '3g') return '360px 0px';
+  return rootMargin;
+};
+
 const useNearViewport = (rootMargin = '900px', eager = false) => {
   const [node, setNode] = useState(null);
   const ref = useCallback((nextNode) => {
     setNode(nextNode);
   }, []);
+  const resolvedRootMargin = useMemo(() => getTouchMediaRootMargin(rootMargin), [rootMargin]);
   const [isNear, setIsNear] = useState(() => (
     eager
     || typeof window === 'undefined'
@@ -162,11 +176,11 @@ const useNearViewport = (rootMargin = '900px', eager = false) => {
 
     const observer = new IntersectionObserver(([entry]) => {
       setIsNear(Boolean(entry?.isIntersecting));
-    }, { rootMargin, threshold: 0.01 });
+    }, { rootMargin: resolvedRootMargin, threshold: 0.01 });
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [eager, node, rootMargin]);
+  }, [eager, node, resolvedRootMargin]);
 
   return [ref, isNear];
 };
@@ -758,7 +772,7 @@ const FeedImage = React.memo(function FeedImage({ src, alt, className = '', onCl
       alt={alt}
       loading={eager ? 'eager' : 'lazy'}
       decoding="async"
-      fetchPriority={eager ? 'high' : 'auto'}
+      fetchPriority={eager ? 'high' : 'low'}
       sizes={sizes}
       onError={() => setFailed(true)}
       className={className}
@@ -816,6 +830,9 @@ const FeedMediaGrid = React.memo(function FeedMediaGrid({
           const label = attachment.fileName || title;
           const showHiddenOverlay = hiddenCount > 0 && index === visible.length - 1;
           const tileClass = isSingle ? '' : 'aspect-square min-h-0';
+          // Only the first attachment in the first post gets high priority.
+          // Loading every tile eagerly can block the composer and header on a phone.
+          const shouldEagerLoad = eagerMedia && index === 0;
           return (
             <div
               key={`${attachment.fileUrl}-${index}`}
@@ -827,7 +844,7 @@ const FeedMediaGrid = React.memo(function FeedMediaGrid({
                   src={src}
                   title={label}
                   videoKey={`${mediaGroupKey}-${index}-${src}`}
-                  eager={eagerMedia}
+                  eager={shouldEagerLoad}
                   compactPlaceholder={!isSingle}
                   autoPlay={autoPlayVideos && isSingle}
                   activeVideoKey={activeVideoKey}
@@ -839,7 +856,7 @@ const FeedMediaGrid = React.memo(function FeedMediaGrid({
                 <FeedImage
                   src={src}
                   alt={label}
-                  eager={eagerMedia}
+                  eager={shouldEagerLoad}
                   sizes={isSingle ? '(max-width: 767px) 92vw, 680px' : '(max-width: 767px) 46vw, 320px'}
                   onClick={(event) => {
                     event.stopPropagation();
@@ -1334,7 +1351,7 @@ export default function HomeFeed({
       if (mediaItems.length) {
         attachments = await Promise.all(mediaItems.map(async (item, index) => {
           const uploadFile = item.fileType === 'image'
-            ? await optimizeImageFile(item.file, { maxDimension: 2048, quality: 0.88, minBytes: 700 * 1024 })
+            ? await optimizeImageFile(item.file, { maxDimension: 1600, quality: 0.84, minBytes: 600 * 1024 })
             : item.file;
           const formData = new FormData();
           formData.append('file', uploadFile);
@@ -2305,7 +2322,7 @@ export default function HomeFeed({
                       attachments={attachments}
                       title={post.title || 'Post media'}
                       mediaGroupKey={postId}
-                      eagerMedia={postIndex < 2}
+                      eagerMedia={postIndex === 0}
                       autoPlayVideos={autoPlayVideos}
                       activeVideoKey={activeVideoKey}
                       onVideoPlay={handleFeedVideoPlay}

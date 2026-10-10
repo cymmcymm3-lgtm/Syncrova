@@ -51,7 +51,6 @@ import {
   X
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
-import { ConnectionState, Room, RoomEvent, Track } from 'livekit-client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { getSocket } from '../services/socket';
@@ -77,6 +76,17 @@ const UserProfileModal = lazy(() => import('./UserProfileModal'));
 const MediaViewer = lazy(() => import('./MediaViewer'));
 const NativeMediaLibrarySheet = lazy(() => import('./NativeMediaLibrarySheet'));
 const StoryViewer = lazy(() => import('./StoryViewer'));
+
+// LiveKit is only needed once someone starts or accepts a voice/video call.
+// Keeping it behind a dynamic import prevents the call SDK from being fetched
+// when a user simply opens the inbox or reads messages on a mobile connection.
+let liveKitClientPromise = null;
+const loadLiveKitClient = () => {
+  if (!liveKitClientPromise) {
+    liveKitClientPromise = import('livekit-client');
+  }
+  return liveKitClientPromise;
+};
 
 let socket;
 const SyncrovaNativeBridge = registerPlugin('SyncrovaNativeBridge');
@@ -1867,7 +1877,11 @@ export default function Messages() {
 
   const setLiveKitRemoteTrack = useCallback((track) => {
     if (!track) return;
-    if (track.kind === Track.Kind.Video) {
+    // LiveKit exposes media kinds as stable string values ("video" / "audio").
+    // Avoid referencing the SDK enum here so the SDK can stay lazy-loaded until
+    // a call is actually started or accepted.
+    const trackKind = String(track.kind || '').toLowerCase();
+    if (trackKind === 'video') {
       liveKitTracksRef.current.remoteVideo?.detach?.();
       liveKitTracksRef.current.remoteVideo = track;
       setRemoteStreamReady(true);
@@ -1875,7 +1889,7 @@ export default function Messages() {
       return;
     }
 
-    if (track.kind === Track.Kind.Audio) {
+    if (trackKind === 'audio') {
       liveKitTracksRef.current.remoteAudio?.detach?.();
       liveKitTracksRef.current.remoteAudio = track;
       if (activeCallRef.current.mode !== 'video') setRemoteStreamReady(true);
@@ -1895,12 +1909,18 @@ export default function Messages() {
       relayOnly: true
     });
 
-    const res = await api.post('/calls/livekit-token', {
-      callId,
-      roomName,
-      mode,
-      partnerId
-    });
+    // Begin fetching the call SDK only after an explicit call action. Fetch it
+    // alongside the token request so the first call still connects promptly.
+    const [liveKitClient, res] = await Promise.all([
+      loadLiveKitClient(),
+      api.post('/calls/livekit-token', {
+        callId,
+        roomName,
+        mode,
+        partnerId
+      })
+    ]);
+    const { ConnectionState, Room, RoomEvent, Track } = liveKitClient;
     const livekitUrl = res.data?.url;
     const token = res.data?.token;
     const nextRoomName = res.data?.roomName || roomName || `syncrova-call-${callId}`;
@@ -1966,7 +1986,7 @@ export default function Messages() {
     if (mode === 'video') {
       const publication = await room.localParticipant.setCameraEnabled(true);
       liveKitTracksRef.current.localVideo = publication?.track
-        || room.localParticipant.getTrackPublication(Track.Source.Camera)?.track
+        || room.localParticipant.getTrackPublication(Track?.Source?.Camera || 'camera')?.track
         || null;
       setCameraOff(false);
       attachLiveKitMedia();
@@ -2482,7 +2502,7 @@ export default function Messages() {
           liveKitTracksRef.current.localVideo = null;
         } else {
           liveKitTracksRef.current.localVideo = publication?.track
-            || room.localParticipant.getTrackPublication(Track.Source.Camera)?.track
+            || room.localParticipant.getTrackPublication('camera')?.track
             || null;
           attachLiveKitMedia();
         }
@@ -5041,8 +5061,13 @@ export default function Messages() {
 
     const attachments = getMessageAttachments(message);
     const primaryAttachment = attachments[0] || message;
+    // On phones, previous messages stay sharp enough as thumbnails while the
+    // current message keeps the feed-sized variant. Full quality is still
+    // available in the media viewer, so the chat thread avoids decoding large
+    // photos without reducing desktop conversation quality.
+    const preferCompactMedia = !loadEager && isMobileMessagesViewport();
     const mediaUrl = primaryAttachment.fileType === 'image'
-      ? resolveMediaVariantUrl(primaryAttachment, ['feed', 'large', 'thumb'])
+      ? resolveMediaVariantUrl(primaryAttachment, preferCompactMedia ? ['thumb', 'feed', 'large'] : ['feed', 'thumb', 'large'])
       : resolveMediaUrl(primaryAttachment.fileUrl);
 
     if (attachments.length > 1) {
@@ -5435,7 +5460,7 @@ export default function Messages() {
                     aria-label="Open shared media"
                   >
                     {mediaAttachment.fileType === 'image' ? (
-              <img src={mediaUrl} alt={mediaAttachment.fileName || 'Shared media'} loading="lazy" decoding="async" draggable={false} className="h-full w-full object-cover" />
+              <img src={mediaUrl} alt={mediaAttachment.fileName || 'Shared media'} loading="lazy" decoding="async" fetchPriority="low" sizes="(max-width: 767px) 22vw, 160px" draggable={false} className="h-full w-full object-cover" />
             ) : (
               <VideoThumbnail src={mediaUrl} className="h-full w-full" iconSize={21} label={mediaAttachment.fileName || 'Shared video'} preload="none" />
             )}
@@ -6954,7 +6979,7 @@ export default function Messages() {
                             aria-label="Open shared media"
                           >
                             {mediaAttachment.fileType === 'image' ? (
-                              <img src={mediaUrl} alt={mediaAttachment.fileName || 'Shared media'} loading="lazy" decoding="async" draggable={false} className="h-full w-full object-cover" />
+                              <img src={mediaUrl} alt={mediaAttachment.fileName || 'Shared media'} loading="lazy" decoding="async" fetchPriority="low" sizes="(max-width: 767px) 27vw, 160px" draggable={false} className="h-full w-full object-cover" />
                             ) : (
                               <VideoThumbnail src={mediaUrl} className="h-full w-full" iconSize={21} label={mediaAttachment.fileName || 'Shared video'} preload="none" />
                             )}
