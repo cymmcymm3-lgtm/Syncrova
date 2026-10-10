@@ -3,7 +3,7 @@ const webpush = require('web-push');
 const auth = require('../middleware/auth');
 const Subscription = require('../models/Subscription');
 const Notification = require('../models/Notification');
-const { emitNotificationState, getUnreadCount } = require('../services/notifications');
+const { emitNotificationState, getUnreadSummary } = require('../services/notifications');
 const { USER_AVATAR_MEDIA_FIELDS, hydrateMediaUserInPlace } = require('../utils/mediaUrls');
 const {
   isNativePushConfigured,
@@ -83,16 +83,22 @@ router.delete('/native/register', auth, async (req, res) => {
 
 router.get('/', auth, async (req, res) => {
   try {
-    const [notifications, unreadCount] = await Promise.all([
+    const [notifications, unreadSummary] = await Promise.all([
       Notification.find({ userId: req.user })
         .populate('actorId', USER_AVATAR_MEDIA_FIELDS)
         .sort({ createdAt: -1 })
         .limit(40)
         .lean(),
-      getUnreadCount(req.user)
+      getUnreadSummary(req.user)
     ]);
     notifications.forEach(notification => hydrateMediaUserInPlace(notification.actorId));
-    res.json({ notifications, unreadCount });
+    res.json({
+      notifications,
+      // Badges represent the two actionable categories (messages and other
+      // activity), never the raw number of individual events.
+      unreadCount: unreadSummary.total,
+      unreadSummary
+    });
   } catch (err) {
     res.status(500).json({ msg: err.message });
   }
@@ -100,7 +106,11 @@ router.get('/', auth, async (req, res) => {
 
 router.get('/unread-count', auth, async (req, res) => {
   try {
-    res.json({ unreadCount: await getUnreadCount(req.user) });
+    const unreadSummary = await getUnreadSummary(req.user);
+    res.json({
+      unreadCount: unreadSummary.total,
+      unreadSummary
+    });
   } catch (err) {
     res.status(500).json({ msg: err.message });
   }
@@ -110,7 +120,11 @@ router.put('/read-all', auth, async (req, res) => {
   try {
     await Notification.updateMany({ userId: req.user, read: false }, { $set: { read: true } });
     await emitNotificationState(req.app.get('io'), req.user);
-    res.json({ msg: 'Notifications marked as read', unreadCount: 0 });
+    res.json({
+      msg: 'Notifications marked as read',
+      unreadCount: 0,
+      unreadSummary: { messages: 0, activity: 0, total: 0 }
+    });
   } catch (err) {
     res.status(500).json({ msg: err.message });
   }

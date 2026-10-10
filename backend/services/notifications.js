@@ -4,15 +4,79 @@ const { USER_AVATAR_MEDIA_FIELDS, hydrateMediaUserInPlace } = require('../utils/
 
 const normalizeId = (value) => String(value?._id || value?.id || value || '');
 
-const getUnreadCount = (userId) => Notification.countDocuments({ userId, read: false });
+const messageNotificationClauses = [
+  { type: 'message' },
+  // `type` has always been required, but this protects any very old record
+  // that predates it without misclassifying note/post activity that happens
+  // to link to the Messages screen.
+  {
+    $and: [
+      { type: { $exists: false } },
+      { href: { $regex: '^/messages(?:[/?]|$)' } }
+    ]
+  }
+];
+
+const retiredNotificationClauses = [
+  { type: { $in: ['marketplace', 'listing', 'group'] } },
+  { href: { $regex: '^/(?:marketplace|groups|group)(?:/|$)', $options: 'i' } },
+  { title: { $regex: '\\b(?:marketplace|listing|buy(?:ing)? and sell(?:ing)?|item sold)\\b', $options: 'i' } },
+  { body: { $regex: '\\b(?:marketplace|listing|buy(?:ing)? and sell(?:ing)?|item sold)\\b', $options: 'i' } }
+];
+
+// The app deliberately shows attention *categories*, not an ever-growing
+// event counter. A busy conversation is still one thing for a person to
+// check, just as several reactions are one activity bucket. Keep this on the
+// server so a client that only has the newest page of notifications cannot
+// accidentally turn a 1/2 badge back into a 9+ badge.
+const getUnreadSummary = async (userId) => {
+  const visibleUnreadClauses = [
+    { userId, read: false },
+    // These sections are no longer surfaced in Syncrova, so old records must
+    // not keep an attention badge alive.
+    { $nor: retiredNotificationClauses }
+  ];
+
+  const [messageUnreadCount, activityUnreadCount] = await Promise.all([
+    Notification.countDocuments({
+      $and: [
+        ...visibleUnreadClauses,
+        { $or: messageNotificationClauses }
+      ]
+    }),
+    Notification.countDocuments({
+      $and: [
+        ...visibleUnreadClauses,
+        { $nor: messageNotificationClauses }
+      ]
+    })
+  ]);
+
+  const messages = messageUnreadCount > 0 ? 1 : 0;
+  const activity = activityUnreadCount > 0 ? 1 : 0;
+
+  return {
+    messages,
+    activity,
+    total: messages + activity,
+    // Useful for richer surfaces, without using them as a badge value.
+    messageUnreadCount,
+    activityUnreadCount
+  };
+};
 
 const emitNotificationState = async (io, userId, notification = null) => {
-  if (!io || !userId) return;
-  const unreadCount = await getUnreadCount(userId);
-  io.to(`user_${normalizeId(userId)}`).emit('notifications-updated', {
-    unreadCount,
+  if (!userId) return null;
+  const unreadSummary = await getUnreadSummary(userId);
+  const state = {
+    // This is intentionally an attention-category count (0, 1, or 2), not
+    // the raw total of individual notification documents.
+    unreadCount: unreadSummary.total,
+    unreadSummary,
     notification
-  });
+  };
+  if (io) io.to(`user_${normalizeId(userId)}`).emit('notifications-updated', state);
+  return state;
 };
 
 const normalizeDedupeKey = (value) => String(value || '').trim().slice(0, 220);
@@ -123,5 +187,5 @@ module.exports = {
   createNotifications,
   removeNotifications,
   emitNotificationState,
-  getUnreadCount
+  getUnreadSummary
 };

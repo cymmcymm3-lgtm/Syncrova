@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import {
   ArrowRight,
   ChevronRight,
+  Gamepad2,
   Loader2,
   Plus,
   PlayCircle,
@@ -469,6 +470,33 @@ function DashboardRankPanel({ gameStats, leaders, loading, onOpenGameHub }) {
   );
 }
 
+function DashboardMobileGamesShortcut({ gameStats, onOpenGameHub }) {
+  const rank = gameStats?.rank?.shortName || gameStats?.rank?.name || 'New player';
+  const bestScore = compactNumber(gameStats?.highScore || 0);
+
+  return (
+    <button
+      type="button"
+      onClick={onOpenGameHub}
+      className="dashboard-mobile-games-shortcut w-full text-left"
+      aria-label="Open Games"
+    >
+      <span className="dashboard-mobile-games-shortcut__icon" aria-hidden="true">
+        <Gamepad2 size={22} strokeWidth={2.25} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="dashboard-mobile-games-shortcut__title">Explore Games</span>
+        <span className="dashboard-mobile-games-shortcut__copy">Play with classmates and climb the ranks</span>
+      </span>
+      <span className="dashboard-mobile-games-shortcut__meta">
+        <span>{rank}</span>
+        <strong>{bestScore}</strong>
+      </span>
+      <ChevronRight className="dashboard-mobile-games-shortcut__arrow" size={19} strokeWidth={2.4} aria-hidden="true" />
+    </button>
+  );
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
   const { stories, storyGroups: presenceStoryGroups } = usePresence();
@@ -913,6 +941,12 @@ export default function Dashboard() {
               currentUser={user}
               mobileVariant="facebook"
               mobileTopSlot={renderStoryPanel({ mobile: true })}
+              mobileAfterFirstPost={(
+                <DashboardMobileGamesShortcut
+                  gameStats={gameStats}
+                  onOpenGameHub={() => navigate('/arena')}
+                />
+              )}
             />
           </div>
         </div>

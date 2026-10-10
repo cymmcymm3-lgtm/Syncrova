@@ -266,6 +266,11 @@ const getMessageAttachments = (message = {}) => {
   }];
 };
 
+// Media arrives after the message shell has already been mounted. Keeping this
+// check in one place lets the thread use a non-animated settle for photos,
+// videos, voice notes, and files instead of competing smooth-scroll calls.
+const hasMessageAttachment = (message = {}) => getMessageAttachments(message).length > 0;
+
 const getSelectedAttachmentItems = (attachment) => {
   if (!attachment) return [];
   if (Array.isArray(attachment.items)) return attachment.items;
@@ -882,6 +887,9 @@ export default function Messages() {
   const loadingOlderMessagesRef = useRef(false);
   const pendingAutoScrollRef = useRef(false);
   const pendingAutoScrollBehaviorRef = useRef('smooth');
+  const mediaBottomPinUntilRef = useRef(0);
+  const uploadProgressFrameRef = useRef(null);
+  const pendingUploadProgressRef = useRef(0);
   const preserveNextMessageScrollRef = useRef(false);
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
@@ -1166,6 +1174,22 @@ export default function Messages() {
     return thread.scrollHeight - thread.scrollTop - thread.clientHeight <= threshold;
   }, []);
 
+  // Images and video metadata can increase a message row after it has been
+  // appended.  When the person is already reading the latest message, keep
+  // that edge pinned without forcing a jump for someone browsing older chat.
+  const armMediaBottomPin = useCallback((force = false) => {
+    if (!force && !isThreadNearBottom(220)) return false;
+    // A slow mobile connection can decode a large photo well after its
+    // upload completes. Keep the newest edge stable long enough for that
+    // decode, unless the person deliberately starts browsing the thread.
+    mediaBottomPinUntilRef.current = Date.now() + 30_000;
+    return true;
+  }, [isThreadNearBottom]);
+
+  const cancelMediaBottomPin = useCallback(() => {
+    mediaBottomPinUntilRef.current = 0;
+  }, []);
+
   const stabilizeOpeningScroll = useCallback(() => {
     const frames = [];
     const timers = [];
@@ -1196,6 +1220,48 @@ export default function Messages() {
     scrollThreadToBottomNow();
     if (typeof window !== 'undefined') window.setTimeout(scrollThreadToBottomNow, 60);
   }, [scrollThreadToBottomNow]);
+
+  const settleThreadAfterMediaLoad = useCallback(() => {
+    if (openingConversationRef.current) {
+      keepOpeningThreadPinned();
+      return;
+    }
+
+    if (mediaBottomPinUntilRef.current <= Date.now()) return;
+    requestAnimationFrame(() => {
+      if (mediaBottomPinUntilRef.current > Date.now()) {
+        scrollThreadToBottomNow();
+      }
+    });
+  }, [keepOpeningThreadPinned, scrollThreadToBottomNow]);
+
+  // Upload progress can fire many times per second. Rendering the whole chat
+  // on every network tick is noticeable on a phone, especially with albums.
+  // Coalesce those updates into one paint frame.
+  const scheduleUploadProgress = useCallback((value) => {
+    const nextValue = Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+    pendingUploadProgressRef.current = nextValue;
+
+    if (uploadProgressFrameRef.current || typeof window === 'undefined') {
+      if (typeof window === 'undefined') setUploadProgress(nextValue);
+      return;
+    }
+
+    uploadProgressFrameRef.current = window.requestAnimationFrame(() => {
+      uploadProgressFrameRef.current = null;
+      const progress = pendingUploadProgressRef.current;
+      setUploadProgress(previous => previous === progress ? previous : progress);
+    });
+  }, []);
+
+  const resetUploadProgress = useCallback(() => {
+    if (uploadProgressFrameRef.current && typeof window !== 'undefined') {
+      window.cancelAnimationFrame(uploadProgressFrameRef.current);
+      uploadProgressFrameRef.current = null;
+    }
+    pendingUploadProgressRef.current = 0;
+    setUploadProgress(0);
+  }, []);
 
   const keepComposerAtLatest = useCallback(() => {
     if (!selectedUserId) return;
@@ -1233,12 +1299,12 @@ export default function Messages() {
       });
       return null;
     });
-    setUploadProgress(0);
+    resetUploadProgress();
     setAttachmentPreview(prev => {
       if (prev) URL.revokeObjectURL(prev);
       return null;
     });
-  }, []);
+  }, [resetUploadProgress]);
 
   const refreshChatHeadsStatus = useCallback(async () => {
     const status = await getChatHeadsStatus();
@@ -2856,8 +2922,15 @@ export default function Messages() {
       if (!incomingMessages.length) return;
 
       const shouldAutoScroll = incomingMessages.some(message => getEntityId(message.from) === currentUserId) || isThreadNearBottom();
+      const includesAttachment = incomingMessages.some(hasMessageAttachment);
+      // A local send explicitly arms this below. Socket echoes and incoming
+      // media should only pin when the person is still reading the latest
+      // messages, so a manual scroll cannot be pulled back down later.
+      if (shouldAutoScroll && includesAttachment) armMediaBottomPin();
       pendingAutoScrollRef.current = shouldAutoScroll;
-      pendingAutoScrollBehaviorRef.current = incomingMessages.length > 1 ? 'auto' : 'smooth';
+      pendingAutoScrollBehaviorRef.current = incomingMessages.length > 1 || (shouldAutoScroll && includesAttachment)
+        ? 'auto'
+        : 'smooth';
 
       React.startTransition(() => {
         setMessages(prev => {
@@ -3110,6 +3183,7 @@ export default function Messages() {
       clearInterval(heartbeat);
     };
   }, [
+    armMediaBottomPin,
     cacheConversationBackground,
     cacheConversationNickname,
     currentUserId,
@@ -3133,6 +3207,7 @@ export default function Messages() {
   ]);
 
   useEffect(() => {
+    mediaBottomPinUntilRef.current = 0;
     if (selectedUser) {
       setMessages([]);
       setVisibleMessageCount(getMessageRenderBatch());
@@ -3218,6 +3293,10 @@ export default function Messages() {
     return () => {
       clearTimeout(typingTimeoutRef.current);
       clearInterval(recordingTimerRef.current);
+      if (uploadProgressFrameRef.current && typeof window !== 'undefined') {
+        window.cancelAnimationFrame(uploadProgressFrameRef.current);
+        uploadProgressFrameRef.current = null;
+      }
       if (mediaRecorderRef.current?.state === 'recording') {
         recordingCancelledRef.current = true;
         mediaRecorderRef.current.stop();
@@ -3242,7 +3321,7 @@ export default function Messages() {
         if (!progressEvent.total) return;
         const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
         if (onProgress) onProgress(progress);
-        else setUploadProgress(progress);
+        else scheduleUploadProgress(progress);
       }
     });
 
@@ -3270,7 +3349,7 @@ export default function Messages() {
           const item = attachmentItems[index];
           const upload = await uploadMessageAttachment(item.file, item.fileType, (progress) => {
             const totalProgress = Math.round(((index + (progress / 100)) / attachmentItems.length) * 100);
-            setUploadProgress(totalProgress);
+            scheduleUploadProgress(totalProgress);
           }, item.edit);
           uploadedAttachments.push(upload);
         }
@@ -3280,7 +3359,10 @@ export default function Messages() {
       }
 
       const res = await api.post('/messages', payload);
+      const sentAttachment = attachmentItems.length > 0 || hasMessageAttachment(res.data);
+      if (sentAttachment) armMediaBottomPin(true);
       pendingAutoScrollRef.current = true;
+      pendingAutoScrollBehaviorRef.current = sentAttachment ? 'auto' : 'smooth';
       setMessages(prev => {
         if (prev.some(item => getEntityId(item) === getEntityId(res.data))) return prev;
         return [...prev, res.data];
@@ -3290,13 +3372,12 @@ export default function Messages() {
       clearAttachment();
       fetchChatStreak(getEntityId(selectedUser));
       if (soundEnabled) playUiSound('send', 0.35);
-      scrollToBottom();
     } catch (err) {
       toast.error(err.response?.data?.msg || 'Failed to send');
       if (!overrideAttachment) setComposerText(draftText);
     } finally {
       setSending(false);
-      setUploadProgress(0);
+      resetUploadProgress();
     }
   };
 
@@ -4455,7 +4536,7 @@ export default function Messages() {
     const nextItems = selectedAttachmentItems.filter(item => item.id !== itemId);
     if (!nextItems.length) {
       setSelectedAttachment(null);
-      setUploadProgress(0);
+      resetUploadProgress();
       return;
     }
     setSelectedAttachment(prev => ({
@@ -4464,7 +4545,7 @@ export default function Messages() {
       file: nextItems[0].file,
       fileType: nextItems.length > 1 ? 'album' : nextItems[0].fileType
     }));
-  }, [selectedAttachmentItems]);
+  }, [resetUploadProgress, selectedAttachmentItems]);
   const chatStreakCount = chatStreak?.currentStreak || 0;
   const chatStreakText = chatStreakCount > 0
     ? `${chatStreakCount} day${chatStreakCount === 1 ? '' : 's'}`
@@ -4953,7 +5034,7 @@ export default function Messages() {
     );
   };
 
-  const renderMessageAttachment = (message, isMe, isMyDayReply = false) => {
+  const renderMessageAttachment = (message, isMe, isMyDayReply = false, loadEager = false) => {
     if (message.unsent) {
       return <p className="text-sm italic opacity-75">This message was unsent</p>;
     }
@@ -4984,12 +5065,12 @@ export default function Messages() {
 	                    <img
 	                      src={itemUrl}
 	                      alt={attachment.fileName || 'Album photo'}
-	                      loading="lazy"
+	                      loading={loadEager && index === 0 ? 'eager' : 'lazy'}
 	                      decoding="async"
-	                      fetchPriority="low"
+	                      fetchPriority={loadEager && index === 0 ? 'high' : 'low'}
 	                      sizes="(max-width: 767px) 40vw, 220px"
 	                      draggable={false}
-	                      onLoad={keepOpeningThreadPinned}
+	                      onLoad={settleThreadAfterMediaLoad}
 	                      className="h-full w-full object-cover"
                     />
                   ) : attachment.fileType === 'video' ? (
@@ -4999,8 +5080,8 @@ export default function Messages() {
                       videoClassName="h-full w-full object-cover opacity-95"
                       iconSize={22}
                       label={attachment.fileName || 'Album video'}
-                      preload="none"
-                      onReady={keepOpeningThreadPinned}
+                      preload={loadEager && index === 0 ? 'metadata' : 'none'}
+                      onReady={settleThreadAfterMediaLoad}
                     />
                   ) : (
                     <span className="flex h-full w-full flex-col items-center justify-center gap-2 bg-slate-100 p-3 text-slate-600 dark:bg-gray-900 dark:text-gray-300">
@@ -5061,12 +5142,12 @@ export default function Messages() {
 	          <img
 	            src={mediaUrl}
 	            alt={primaryAttachment.fileName || 'Attachment'}
-	            loading="lazy"
+	            loading={loadEager ? 'eager' : 'lazy'}
 	            decoding="async"
-	            fetchPriority="low"
+	            fetchPriority={loadEager ? 'high' : 'low'}
 	            sizes="(max-width: 767px) 76vw, 420px"
 	            draggable={false}
-	            onLoad={keepOpeningThreadPinned}
+	            onLoad={settleThreadAfterMediaLoad}
 	            className={`${isMyDayReply ? 'max-h-72 rounded-[1rem]' : 'max-h-80'} w-full object-contain`}
           />
         </button>
@@ -5088,8 +5169,8 @@ export default function Messages() {
               videoClassName="max-h-80 object-contain opacity-95"
               iconSize={25}
               label={primaryAttachment.fileName || 'Video attachment'}
-              preload="none"
-              onReady={keepOpeningThreadPinned}
+              preload={loadEager ? 'metadata' : 'none'}
+              onReady={settleThreadAfterMediaLoad}
             />
           </span>
         </button>
@@ -6178,7 +6259,13 @@ export default function Messages() {
                   </div>
                 )}
 
-              <div ref={messageThreadRef} className="mobile-message-thread messages-clean-thread min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-4 sm:py-5">
+              <div
+                ref={messageThreadRef}
+                className="mobile-message-thread messages-clean-thread min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-4 sm:py-5"
+                onWheel={cancelMediaBottomPin}
+                onTouchStart={cancelMediaBottomPin}
+                onPointerDown={cancelMediaBottomPin}
+              >
                 {loading ? (
                   <div className="space-y-4">
                     {[0, 1, 2].map(item => (
@@ -6254,6 +6341,7 @@ export default function Messages() {
                         const sender = getMessageSender(message, isMe);
                         const reactions = message.reactions || [];
                         const isLatestOwn = messageId === latestOwnMessageId;
+                        const isLatestRenderedMessage = messageId === getEntityId(renderedMessages[renderedMessages.length - 1]);
                         const isSearchMatch = messageSearchMatchSet.has(messageId);
                         const showUnreadDivider = unreadDividerMessageId && unreadDividerMessageId === messageId;
                         if (message.system) {
@@ -6383,7 +6471,7 @@ export default function Messages() {
                               >
                                 {renderReplyPreview(message, isMe)}
                                 <div className="space-y-2">
-                                  {renderMessageAttachment(message, isMe, isContextReply)}
+                                  {renderMessageAttachment(message, isMe, isContextReply, isLatestRenderedMessage)}
                                   {message.text && !message.unsent && (
                                     isContextReply ? (
                                       <div className="rounded-2xl bg-gray-50 px-3 py-2.5 text-left ring-1 ring-gray-100 dark:bg-gray-950/60 dark:ring-gray-800">

@@ -143,19 +143,54 @@ const normalizeNotificationFeed = (items = [], limit = 40) => {
     .slice(0, limit);
 };
 
-const getVisibleNotificationUnreadCount = (items = [], reportedUnreadCount = 0) => {
-  const source = Array.isArray(items) ? items : [];
-  const visible = normalizeNotificationFeed(source);
-  // If the UI hides retired/duplicate records, its badge must describe exactly
-  // what is visible rather than retaining an inflated server total.
-  if (visible.length === source.length) return reportedUnreadCount;
-  return visible.reduce((count, item) => count + (item.read ? 0 : 1), 0);
+const isMessageNotification = (notification: AppNotification = {}) => {
+  const type = String(notification.type || '').toLowerCase();
+  const href = String(notification.href || notification.meta?.href || notification.meta?.path || '').trim();
+  return type === 'message' || (!type && /^\/messages(?:[/?]|$)/.test(href));
 };
 
-const isMessageNotification = (notification: AppNotification = {}) => {
-  const text = `${notification.title || ''} ${notification.body || ''} ${notification.href || ''}`.toLowerCase();
-  return notification.type === 'message' || text.includes('/messages');
+type NotificationUnreadSummary = {
+  messages: number;
+  activity: number;
+  total: number;
 };
+
+const emptyNotificationUnreadSummary = (): NotificationUnreadSummary => ({
+  messages: 0,
+  activity: 0,
+  total: 0
+});
+
+const normalizeNotificationUnreadSummary = (value: unknown): NotificationUnreadSummary | null => {
+  if (!value || typeof value !== 'object') return null;
+  const summary = value as Record<string, unknown>;
+  const messages = Number(summary.messages) > 0 ? 1 : 0;
+  const activity = Number(summary.activity) > 0 ? 1 : 0;
+
+  // A category-aware server response is authoritative. Do not use the raw
+  // event total here: one active chat should remain one message signal.
+  if ('messages' in summary || 'activity' in summary) {
+    return { messages, activity, total: messages + activity };
+  }
+
+  return null;
+};
+
+const getNotificationUnreadSummaryFromItems = (items = []): NotificationUnreadSummary => {
+  const summary = normalizeNotificationFeed(items).reduce((next, notification) => {
+    if (notification.read) return next;
+    if (isMessageNotification(notification)) next.messages = 1;
+    else next.activity = 1;
+    return next;
+  }, { messages: 0, activity: 0 } as Pick<NotificationUnreadSummary, 'messages' | 'activity'>);
+
+  return { ...summary, total: summary.messages + summary.activity };
+};
+
+const getVisibleNotificationUnreadSummary = (items = [], reportedSummary: unknown = null) => (
+  normalizeNotificationUnreadSummary(reportedSummary)
+  || getNotificationUnreadSummaryFromItems(items)
+);
 
 const getNotificationActor = (notification: AppNotification = {}) => (
   notification.actorId && typeof notification.actorId === 'object' ? notification.actorId : null
@@ -260,7 +295,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
+  const [notificationUnreadSummary, setNotificationUnreadSummary] = useState<NotificationUnreadSummary>(emptyNotificationUnreadSummary);
   const [notifications, setNotifications] = useState([]);
   const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState(null);
@@ -293,6 +328,17 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const avatarSrc = resolveMediaUrl(user?.avatar);
+  const notificationUnreadCount = notificationUnreadSummary.total;
+  const hasUnreadMessages = unreadCount > 0;
+  const messageBadgeCount = hasUnreadMessages ? 1 : 0;
+  const friendBadgeSignal = friendBadgeCount > 0 ? 1 : 0;
+  const notificationAttentionLabel = notificationUnreadSummary.messages && notificationUnreadSummary.activity
+    ? 'New messages and activity'
+    : notificationUnreadSummary.messages
+      ? 'New messages'
+      : notificationUnreadSummary.activity
+        ? 'New activity'
+        : "You're all caught up";
   const pageContent = children || <Outlet />;
   const isCompactRoute = location.pathname.startsWith('/messages') || location.pathname.startsWith('/arena') || location.pathname.startsWith('/developer-console') || location.pathname.startsWith('/reels');
   const isDashboardRoute = location.pathname === '/dashboard';
@@ -589,7 +635,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
         if (cancelled) return;
         const incoming = res.data?.notifications || [];
         setNotifications(normalizeNotificationFeed(incoming));
-        setNotificationUnreadCount(getVisibleNotificationUnreadCount(incoming, res.data?.unreadCount || 0));
+        setNotificationUnreadSummary(getVisibleNotificationUnreadSummary(incoming, res.data?.unreadSummary));
       } catch {
         // Notification center is non-blocking.
       }
@@ -612,9 +658,10 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
     if (!user) return undefined;
 
     const socket = getSocket();
-    const refreshNotifications = ({ unreadCount: nextUnreadCount, notification }: { unreadCount?: number; notification?: AppNotification } = {}) => {
+    const refreshNotifications = ({ unreadSummary: nextUnreadSummary, notification }: { unreadSummary?: unknown; notification?: AppNotification } = {}) => {
       const isRetiredNotification = isRetiredMarketplaceNotification(notification);
-      if (typeof nextUnreadCount === 'number' && !isRetiredNotification) setNotificationUnreadCount(nextUnreadCount);
+      const normalizedSummary = normalizeNotificationUnreadSummary(nextUnreadSummary);
+      if (normalizedSummary) setNotificationUnreadSummary(normalizedSummary);
       if (notification && !isRetiredNotification) {
         setNotifications(prev => normalizeNotificationFeed([
           notification,
@@ -629,12 +676,16 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
           data: { path: notification.href || '/dashboard', href: notification.href || '/dashboard' }
         });
       }
-      if (isDocumentVisible()) {
+      // Fresh notification events already include a populated row and the
+      // authoritative category summary. Avoid immediately reloading the
+      // entire inbox for every incoming chat/reaction; state-changing events
+      // (read/delete) carry no row and still get a full reconciliation.
+      if (isDocumentVisible() && (!notification || !normalizedSummary)) {
         api.get('/notifications')
           .then(res => {
             const incoming = res.data?.notifications || [];
             setNotifications(normalizeNotificationFeed(incoming));
-            setNotificationUnreadCount(getVisibleNotificationUnreadCount(incoming, res.data?.unreadCount || 0));
+            setNotificationUnreadSummary(getVisibleNotificationUnreadSummary(incoming, res.data?.unreadSummary));
           })
           .catch(() => {});
       }
@@ -812,13 +863,23 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
     }
   };
 
+  const refreshNotificationUnreadSummary = useCallback(async () => {
+    try {
+      const res = await api.get('/notifications/unread-count');
+      const summary = normalizeNotificationUnreadSummary(res.data?.unreadSummary);
+      if (summary) setNotificationUnreadSummary(summary);
+    } catch {
+      // The list remains usable if this lightweight badge refresh fails.
+    }
+  }, []);
+
   const loadNotifications = async () => {
     setNotificationsLoading(true);
     try {
       const res = await api.get('/notifications');
       const incoming = res.data?.notifications || [];
       setNotifications(normalizeNotificationFeed(incoming));
-      setNotificationUnreadCount(getVisibleNotificationUnreadCount(incoming, res.data?.unreadCount || 0));
+      setNotificationUnreadSummary(getVisibleNotificationUnreadSummary(incoming, res.data?.unreadSummary));
     } catch (err) {
       toast.error(err.response?.data?.msg || 'Failed to load notifications');
     } finally {
@@ -838,7 +899,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
     try {
       await api.put('/notifications/read-all');
       setNotifications(prev => prev.map(item => ({ ...item, read: true })));
-      setNotificationUnreadCount(0);
+      setNotificationUnreadSummary(emptyNotificationUnreadSummary());
     } catch (err) {
       toast.error(err.response?.data?.msg || 'Failed to update notifications');
     }
@@ -847,15 +908,16 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
   const openNotification = async (notification) => {
     const id = getEntityId(notification);
     if (!notification.read && id) {
-      api.put(`/notifications/${id}/read`).catch(() => {});
+      api.put(`/notifications/${id}/read`)
+        .then(() => refreshNotificationUnreadSummary())
+        .catch(() => {});
       setNotifications(prev => prev.map(item => getEntityId(item) === id ? { ...item, read: true } : item));
-      setNotificationUnreadCount(count => Math.max(0, count - 1));
     }
     setNotificationPanelOpen(false);
     setSelectedNotification({ ...notification, title: getNotificationHeadline(notification), read: true });
   };
 
-  const markNotificationGroupRead = (items = []) => {
+  const markNotificationGroupRead = async (items = []) => {
     const unreadIds = items
       .filter(item => !item.read)
       .map(getEntityId)
@@ -866,8 +928,8 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
     setNotifications(prev => prev.map(item => (
       unreadSet.has(getEntityId(item)) ? { ...item, read: true } : item
     )));
-    setNotificationUnreadCount(count => Math.max(0, count - unreadIds.length));
-    unreadIds.forEach(id => api.put(`/notifications/${id}/read`).catch(() => {}));
+    await Promise.allSettled(unreadIds.map(id => api.put(`/notifications/${id}/read`)));
+    await refreshNotificationUnreadSummary();
   };
 
   const openNotificationThread = (thread) => {
@@ -912,7 +974,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
     try {
       await api.delete(`/notifications/${id}`);
       setNotifications(prev => prev.filter(item => getEntityId(item) !== id));
-      if (!notification.read) setNotificationUnreadCount(count => Math.max(0, count - 1));
+      await refreshNotificationUnreadSummary();
     } catch (err) {
       toast.error(err.response?.data?.msg || 'Delete failed');
     }
@@ -925,9 +987,8 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
     try {
       await Promise.allSettled(ids.map(id => api.delete(`/notifications/${id}`)));
       const idSet = new Set(ids);
-      const unreadRemoved = thread.items.filter(item => !item.read).length;
       setNotifications(prev => prev.filter(item => !idSet.has(getEntityId(item))));
-      setNotificationUnreadCount(count => Math.max(0, count - unreadRemoved));
+      await refreshNotificationUnreadSummary();
       setExpandedNotificationThreads(prev => {
         const next = new Set(prev);
         next.delete(thread.key);
@@ -976,7 +1037,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
         {!compact && <span>Notifications</span>}
         {notificationUnreadCount > 0 && (
           <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-rose-600 px-1 text-[11px] font-black text-white">
-            {notificationUnreadCount > 9 ? '9+' : notificationUnreadCount}
+            {notificationUnreadCount}
           </span>
         )}
       </button>
@@ -986,7 +1047,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 p-3 dark:border-slate-800">
             <div>
               <p className="text-sm font-black text-slate-950 dark:text-white">Notifications</p>
-              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{notificationUnreadCount} unread</p>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{notificationAttentionLabel}</p>
             </div>
             <div className="flex items-center gap-1">
               <button type="button" onClick={markAllNotificationsRead} className="grid h-9 w-9 place-items-center rounded-full text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800" title="Mark all read">
@@ -1325,7 +1386,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
     const isActive = isNavItemActive(item.path);
     const isMessages = item.path === '/messages';
     const isFriends = item.path === '/friends';
-    const badgeCount = isMessages ? unreadCount : isFriends ? friendBadgeCount : 0;
+    const badgeCount = isMessages ? messageBadgeCount : isFriends ? friendBadgeSignal : 0;
     const activeClasses = isActive
       ? 'border-blue-200 bg-blue-50 text-[#0b57d0] shadow-sm shadow-blue-500/10 dark:border-blue-400/25 dark:bg-blue-950/35 dark:text-sky-200'
       : 'border-transparent bg-transparent text-slate-700 hover:border-blue-100 hover:bg-blue-50/70 hover:text-[#0b57d0] dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-white';
@@ -1337,7 +1398,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
           <item.icon size={isMobile ? 21 : 18} strokeWidth={isActive ? 2.6 : 2.25} />
           {badgeCount > 0 && (
             <span className={`absolute -top-1 -right-2 text-white text-xs rounded-full min-w-[1.25rem] h-5 px-1 flex items-center justify-center ${isMessages ? 'bg-red-500' : 'bg-blue-600'}`}>
-              {badgeCount > 9 ? '9+' : badgeCount}
+              {badgeCount}
             </span>
           )}
         </div>
@@ -1403,7 +1464,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
           <span className="min-w-0">
             <p className="text-base font-black text-slate-950 dark:text-white">Notifications</p>
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              {notificationUnreadCount ? `${notificationUnreadCount} unread` : "You're all caught up"}
+              {notificationAttentionLabel}
             </p>
           </span>
         </div>
@@ -1707,7 +1768,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                     <MessageCircle size={21} />
                     {unreadCount > 0 && (
                       <span className="mobile-home-action-badge">
-                        {unreadCount > 9 ? '9+' : unreadCount}
+                        {messageBadgeCount}
                       </span>
                     )}
                   </button>
@@ -1768,7 +1829,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
               const isActive = isNavItemActive(item.path);
               const isMessages = item.path === '/messages';
               const isFriends = item.path === '/friends';
-              const badgeCount = isMessages ? unreadCount : isFriends ? friendBadgeCount : 0;
+              const badgeCount = isMessages ? messageBadgeCount : isFriends ? friendBadgeSignal : 0;
               return (
                 <Link
                   key={`mobile-fb-${item.path}`}
@@ -1780,7 +1841,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                   <item.icon size={23} strokeWidth={isActive ? 2.8 : 2.25} />
                   {badgeCount > 0 && (
                     <span className="mobile-fb-tabbar-badge">
-                      {badgeCount > 9 ? '9+' : badgeCount}
+                      {badgeCount}
                     </span>
                   )}
                 </Link>
@@ -1857,7 +1918,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
             const isActive = isNavItemActive(item.path);
             const isMessages = item.path === '/messages';
             const isFriends = item.path === '/friends';
-            const badgeCount = isMessages ? unreadCount : isFriends ? friendBadgeCount : 0;
+            const badgeCount = isMessages ? messageBadgeCount : isFriends ? friendBadgeSignal : 0;
             return (
               <Link
                 key={item.path}
@@ -1871,7 +1932,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                 <span className="max-w-full truncate text-[10px] font-black leading-none">{item.mobileLabel || item.label}</span>
                 {badgeCount > 0 && (
                   <span className={`absolute right-1 top-0 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1 text-xs text-white ${isMessages ? 'bg-red-500' : 'bg-blue-600'}`}>
-                    {badgeCount > 9 ? '9+' : badgeCount}
+                    {badgeCount}
                   </span>
                 )}
               </Link>

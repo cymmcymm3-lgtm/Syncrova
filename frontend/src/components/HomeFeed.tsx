@@ -882,6 +882,7 @@ export default function HomeFeed({
   currentUser,
   mobileTopSlot = null,
   mobileOverviewSlot = null,
+  mobileAfterFirstPost = null,
   mobileVariant = 'default'
 }) {
   const useMobileHomeLayout = mobileVariant === 'facebook';
@@ -1858,24 +1859,27 @@ export default function HomeFeed({
           </button>
           <div className="home-feed-composer-inline-actions flex shrink-0 items-center gap-1">
             <button type="button" onClick={() => setMobileComposerOpen(true)} className="home-feed-composer-action" aria-label="Start live update" title="Live update">
-            <Video size={17} className="text-rose-500" />
+              <Video size={17} className="text-rose-500" />
+              <span className="home-feed-composer-action-label">Update</span>
             </button>
             <label className="home-feed-composer-action cursor-pointer" aria-label="Add photo" title="Add photo">
-            <ImageIcon size={17} className="text-emerald-600" />
-            <input
-              type="file"
-              accept="image/*,video/*"
-              multiple
-              className="hidden"
-              onChange={event => {
-                selectMedia(event.target.files);
-                setMobileComposerOpen(true);
-                event.target.value = '';
-              }}
-            />
+              <ImageIcon size={17} className="text-emerald-600" />
+              <span className="home-feed-composer-action-label">Photo</span>
+              <input
+                type="file"
+                accept="image/*,video/*"
+                multiple
+                className="hidden"
+                onChange={event => {
+                  selectMedia(event.target.files);
+                  setMobileComposerOpen(true);
+                  event.target.value = '';
+                }}
+              />
             </label>
             <button type="button" onClick={() => setMobileComposerOpen(true)} className="home-feed-composer-action" aria-label="Add feeling" title="Add feeling">
-            <SmilePlus size={17} className="text-amber-500" />
+              <SmilePlus size={17} className="text-amber-500" />
+              <span className="home-feed-composer-action-label">Feeling</span>
             </button>
           </div>
         </div>
@@ -2214,7 +2218,8 @@ export default function HomeFeed({
             const taggedNames = (post.taggedUsers || []).map(person => person?.name).filter(Boolean);
 
             return (
-              <article id={`post-${postId}`} key={postId} className={`feed-card mobile-facebook-post ${attachments.length ? 'feed-card--has-media' : ''} overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/55 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20`}>
+              <React.Fragment key={postId}>
+              <article id={`post-${postId}`} className={`feed-card mobile-facebook-post ${attachments.length ? 'feed-card--has-media' : ''} overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/55 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20`}>
                 <header className="feed-card-header flex items-start gap-3 p-4">
                   <Avatar user={author} onClick={openProfile} />
                   <div className="min-w-0 flex-1">
@@ -2473,6 +2478,12 @@ export default function HomeFeed({
                   </form>
                 </div>
               </article>
+              {postIndex === 0 && mobileAfterFirstPost && (
+                <div className={`home-feed-mobile-slot home-feed-mobile-after-first-post ${mobileHomeVisibilityClass}`}>
+                  {mobileAfterFirstPost}
+                </div>
+              )}
+              </React.Fragment>
             );
           })}
 

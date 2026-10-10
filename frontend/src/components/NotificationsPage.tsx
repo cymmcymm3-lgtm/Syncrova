@@ -123,12 +123,40 @@ const normalizeNotificationFeed = (items = []) => {
 };
 
 const getNotificationGroupKey = (notification: AppNotification = {}) => {
-  const type = notification.type || '';
+  const type = String(notification.type || '').toLowerCase();
+  const href = String(notification.href || notification.meta?.href || notification.meta?.path || '').trim();
   const text = `${notification.title || ''} ${notification.body || ''} ${notification.href || ''}`.toLowerCase();
-  if (type === 'message' || text.includes('/messages')) return 'message';
+  if (type === 'message' || (!type && /^\/messages(?:[/?]|$)/.test(href))) return 'message';
   if (type === 'friend' || text.includes('/friends')) return 'friend';
   if (type === 'game' || text.includes('game hub') || text.includes('/arena')) return 'game';
   return 'activity';
+};
+
+type NotificationAttentionSummary = {
+  messages: number;
+  activity: number;
+  total: number;
+};
+
+const getUnreadAttentionSummary = (items = []): NotificationAttentionSummary => {
+  const categories = new Set<string>();
+  normalizeNotificationFeed(items).forEach(notification => {
+    if (!notification.read) {
+      categories.add(getNotificationGroupKey(notification) === 'message' ? 'message' : 'activity');
+    }
+  });
+  const messages = categories.has('message') ? 1 : 0;
+  const activity = categories.has('activity') ? 1 : 0;
+  return { messages, activity, total: messages + activity };
+};
+
+const normalizeUnreadAttentionSummary = (value: unknown): NotificationAttentionSummary | null => {
+  if (!value || typeof value !== 'object') return null;
+  const source = value as Record<string, unknown>;
+  if (!('messages' in source) && !('activity' in source)) return null;
+  const messages = Number(source.messages) > 0 ? 1 : 0;
+  const activity = Number(source.activity) > 0 ? 1 : 0;
+  return { messages, activity, total: messages + activity };
 };
 
 const getNotificationAction = (notification: AppNotification = {}) => {
@@ -214,6 +242,7 @@ const buildMessageThreads = (items = []) => {
 export default function NotificationsPage() {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
+  const [unreadSummary, setUnreadSummary] = useState<NotificationAttentionSummary>({ messages: 0, activity: 0, total: 0 });
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
@@ -223,11 +252,23 @@ export default function NotificationsPage() {
     setLoading(true);
     try {
       const res = await api.get('/notifications');
-      setNotifications(normalizeNotificationFeed(res.data?.notifications || []));
+      const items = normalizeNotificationFeed(res.data?.notifications || []);
+      setNotifications(items);
+      setUnreadSummary(normalizeUnreadAttentionSummary(res.data?.unreadSummary) || getUnreadAttentionSummary(items));
     } catch (err) {
       toast.error(err.response?.data?.msg || 'Failed to load notifications');
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  const refreshUnreadSummary = useCallback(async () => {
+    try {
+      const res = await api.get('/notifications/unread-count');
+      const summary = normalizeUnreadAttentionSummary(res.data?.unreadSummary);
+      if (summary) setUnreadSummary(summary);
+    } catch {
+      // A badge refresh should not interrupt opening or deleting an alert.
     }
   }, []);
 
@@ -246,7 +287,9 @@ export default function NotificationsPage() {
     };
   }, [loadNotifications]);
 
-  const unreadCount = notifications.filter(item => !item.read).length;
+  // The notification center summarizes attention categories. Individual
+  // message threads still retain their exact unread count below.
+  const unreadCount = unreadSummary.total;
   const filteredNotifications = useMemo(() => {
     const query = search.trim().toLowerCase();
     return notifications.filter(item => {
@@ -277,6 +320,7 @@ export default function NotificationsPage() {
     try {
       await api.put('/notifications/read-all');
       setNotifications(prev => prev.map(item => ({ ...item, read: true })));
+      setUnreadSummary({ messages: 0, activity: 0, total: 0 });
       toast.success('Notifications marked as read');
     } catch (err) {
       toast.error(err.response?.data?.msg || 'Failed to update notifications');
@@ -286,7 +330,9 @@ export default function NotificationsPage() {
   const openNotification = async (notification) => {
     const id = getEntityId(notification);
     if (!notification.read && id) {
-      api.put(`/notifications/${id}/read`).catch(() => {});
+      api.put(`/notifications/${id}/read`)
+        .then(() => refreshUnreadSummary())
+        .catch(() => {});
       setNotifications(prev => prev.map(item => getEntityId(item) === id ? { ...item, read: true } : item));
     }
     if (notification.href && !isRetiredMarketplaceNotification(notification)) navigate(notification.href);
@@ -303,11 +349,12 @@ export default function NotificationsPage() {
     setNotifications(prev => prev.map(item => (
       unreadSet.has(getEntityId(item)) ? { ...item, read: true } : item
     )));
-    unreadIds.forEach(id => api.put(`/notifications/${id}/read`).catch(() => {}));
+    await Promise.allSettled(unreadIds.map(id => api.put(`/notifications/${id}/read`)));
+    await refreshUnreadSummary();
   };
 
-  const openMessageThread = async (thread) => {
-    await markNotificationsRead(thread.items);
+  const openMessageThread = (thread) => {
+    void markNotificationsRead(thread.items);
     navigate(thread.latest?.href || '/messages');
   };
 
@@ -328,6 +375,7 @@ export default function NotificationsPage() {
     try {
       await api.delete(`/notifications/${id}`);
       setNotifications(prev => prev.filter(item => getEntityId(item) !== id));
+      await refreshUnreadSummary();
     } catch (err) {
       toast.error(err.response?.data?.msg || 'Delete failed');
     }
@@ -341,6 +389,7 @@ export default function NotificationsPage() {
       await Promise.allSettled(ids.map(id => api.delete(`/notifications/${id}`)));
       const idSet = new Set(ids);
       setNotifications(prev => prev.filter(item => !idSet.has(getEntityId(item))));
+      await refreshUnreadSummary();
       setExpandedMessageThreads(prev => {
         const next = new Set(prev);
         next.delete(thread.key);
@@ -464,7 +513,7 @@ export default function NotificationsPage() {
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[18rem]">
             <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200 dark:bg-slate-950/55 dark:ring-slate-800">
-              <p className="text-xs font-black uppercase text-slate-400">Unread</p>
+              <p className="text-xs font-black uppercase text-slate-400">Needs attention</p>
               <p className="mt-1 text-3xl font-black text-slate-950 dark:text-white">{unreadCount}</p>
             </div>
             <button
