@@ -21,8 +21,16 @@ const STORY_USER_FIELDS = 'name avatar avatarStoragePath avatarStorageProvider c
 const STORY_RELATED_USER_FIELDS = 'name avatar avatarStoragePath avatarStorageProvider isDeveloper';
 
 const getStoryType = (file) => {
-  if (file?.mimetype?.startsWith('image/')) return 'image';
-  if (file?.mimetype?.startsWith('video/')) return 'video';
+  const mimeType = String(file?.mimetype || '').toLowerCase();
+  if (mimeType.startsWith('image/')) return 'image';
+  if (mimeType.startsWith('video/')) return 'video';
+
+  // Some Android/native pickers send application/octet-stream even for a
+  // perfectly valid photo or video. Accept a conservative extension fallback
+  // so My Day does not fail before the upload reaches storage.
+  const extension = path.extname(String(file?.originalname || '')).toLowerCase();
+  if (['.avif', '.bmp', '.gif', '.heic', '.heif', '.jpeg', '.jpg', '.png', '.webp'].includes(extension)) return 'image';
+  if (['.3gp', '.avi', '.m4v', '.mov', '.mp4', '.mpeg', '.mpg', '.webm'].includes(extension)) return 'video';
   return null;
 };
 

@@ -84,7 +84,10 @@ const getActiveCloudProvider = () => {
   if (requestedProvider === 'r2') return 'r2';
   if (requestedProvider === 'supabase') return 'r2';
   if (isR2Configured) return 'r2';
-  if (isHostedRuntime) return 'r2';
+  // Do not infer R2 just because the API runs on Render/production.  Without
+  // credentials that turns every photo, attachment, avatar, and My Day upload
+  // into an immediate "R2 is not configured" failure.  Explicit cloud
+  // selection still fails loudly, while automatic mode remains usable locally.
   return 'local';
 };
 
@@ -480,16 +483,12 @@ const serveR2Object = async (req, res, next) => {
 };
 
 const getMissingConfig = () => {
-  if (cloudStorageProvider === 'r2') {
-    return [
-      !r2Endpoint && 'R2_ENDPOINT or R2_ACCOUNT_ID',
-      !r2AccessKeyId && 'R2_ACCESS_KEY_ID or AWS_ACCESS_KEY_ID',
-      !r2SecretAccessKey && 'R2_SECRET_ACCESS_KEY or AWS_SECRET_ACCESS_KEY',
-      !r2Bucket && 'R2_BUCKET_NAME or S3_BUCKET_NAME'
-    ].filter(Boolean);
-  }
+  // Local storage is a valid automatic fallback. It must not report missing
+  // cloud keys as an error in the health screen simply because the app is
+  // hosted without an optional R2 configuration.
+  if (!isCloudStorageEnabled) return [];
 
-  if (!isCloudStorageEnabled) {
+  if (cloudStorageProvider === 'r2') {
     return [
       !r2Endpoint && 'R2_ENDPOINT or R2_ACCOUNT_ID',
       !r2AccessKeyId && 'R2_ACCESS_KEY_ID or AWS_ACCESS_KEY_ID',
@@ -523,7 +522,9 @@ const getStorageConfigStatus = () => {
       ? `${cloudStorageProvider} cloud missing config`
       : isCloudStorageEnabled
         ? `${cloudStorageProvider} cloud enabled`
-        : 'local uploads',
+        : isHostedRuntime
+          ? 'local uploads (temporary on hosted runtime)'
+          : 'local uploads',
     missing
   };
 };

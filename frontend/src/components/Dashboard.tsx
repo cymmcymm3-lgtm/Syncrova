@@ -37,7 +37,31 @@ const getEntityId = (entity) => String(entity?._id || entity?.id || entity || ''
 
 const MAX_STORY_MEDIA_SELECTION = 10;
 const MAX_STORY_UPLOAD_SIZE = 30 * 1024 * 1024;
+const STORY_UPLOAD_TIMEOUT_MS = 120_000;
 const DASHBOARD_RANK_TIMEOUT_MS = 3500;
+
+const getStoryFileType = (file) => {
+  const mimeType = String(file?.type || '').toLowerCase();
+  if (mimeType.startsWith('image/')) return 'image';
+  if (mimeType.startsWith('video/')) return 'video';
+
+  const fileName = String(file?.name || '').toLowerCase();
+  if (/\.(avif|bmp|gif|heic|heif|jpe?g|png|webp)$/.test(fileName)) return 'image';
+  if (/\.(3gp|avi|m4v|mov|mp4|mpeg|mpg|webm)$/.test(fileName)) return 'video';
+  return '';
+};
+
+const getStoryUploadError = (error) => {
+  const serverMessage = String(error?.response?.data?.msg || '').trim();
+  if (serverMessage) return serverMessage;
+  if (error?.code === 'ECONNABORTED' || /timeout/i.test(String(error?.message || ''))) {
+    return 'My Day upload took too long. Check your connection and try again.';
+  }
+  if (!error?.response || error?.code === 'ERR_NETWORK') {
+    return 'Could not reach Syncrova. Check your connection and try again.';
+  }
+  return 'My Day upload failed. Please try again.';
+};
 
 function DeferredDashboardModuleFallback({ label = 'Opening…' }) {
   return (
@@ -505,6 +529,7 @@ export default function Dashboard() {
   const [rankLoading, setRankLoading] = useState(true);
   const [activeStory, setActiveStory] = useState(null);
   const [storyUploading, setStoryUploading] = useState(false);
+  const [storyUploadLabel, setStoryUploadLabel] = useState('');
   const [storyDraft, setStoryDraft] = useState(null);
   const [storyMediaLibraryOpen, setStoryMediaLibraryOpen] = useState(false);
   const storyInputRef = useRef(null);
@@ -631,21 +656,21 @@ export default function Dashboard() {
 
   const createStoryDraftFromFiles = (incomingFiles = []) => {
     const selectedFiles = Array.from(incomingFiles || []);
-    if (!selectedFiles.length || storyUploading) return;
+    if (!selectedFiles.length || storyUploading) return false;
 
     const files = selectedFiles.slice(0, MAX_STORY_MEDIA_SELECTION);
     if (selectedFiles.length > MAX_STORY_MEDIA_SELECTION) {
       toast.error(`My Day can queue up to ${MAX_STORY_MEDIA_SELECTION} photos or videos`);
     }
 
-    if (files.some(file => !file.type.startsWith('image/') && !file.type.startsWith('video/'))) {
+    if (files.some(file => !getStoryFileType(file))) {
       toast.error('My Day supports photos and videos only');
-      return;
+      return false;
     }
 
     if (files.some(file => file.size > MAX_STORY_UPLOAD_SIZE)) {
       toast.error('My Day upload is too large. Maximum size is 30MB.');
-      return;
+      return false;
     }
 
     setStoryDraft(prev => {
@@ -656,7 +681,7 @@ export default function Dashboard() {
         items: files.map((file, index) => ({
           id: `${file.name}-${file.size}-${file.lastModified || Date.now()}-${index}`,
           file,
-          fileType: file.type.startsWith('video/') ? 'video' : 'image',
+          fileType: getStoryFileType(file),
           previewUrl: URL.createObjectURL(file),
           edit: getDefaultMediaEdit()
         })),
@@ -665,6 +690,7 @@ export default function Dashboard() {
         privacy: 'public'
       };
     });
+    return true;
   };
 
   const uploadStoryFromDashboard = (event) => {
@@ -683,14 +709,18 @@ export default function Dashboard() {
       for (const asset of selectedAssets) {
         files.push(await nativeMediaAssetToFile(asset));
       }
-      createStoryDraftFromFiles(files);
-      toast.success('Media ready for My Day', { id: loadingToast });
+      if (createStoryDraftFromFiles(files)) {
+        toast.success('Media ready for My Day', { id: loadingToast });
+      } else {
+        toast.dismiss(loadingToast);
+      }
     } catch (err) {
       toast.error(err?.message || 'Could not prepare selected media', { id: loadingToast });
     }
   };
 
-  const closeStoryDraft = () => {
+  const closeStoryDraft = ({ force = false } = {}) => {
+    if (storyUploading && !force) return;
     setStoryDraft(prev => {
       getStoryDraftItems(prev).forEach(item => {
         if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
@@ -704,9 +734,12 @@ export default function Dashboard() {
     if (!draftItems.length || storyUploading) return;
 
     setStoryUploading(true);
+    setStoryUploadLabel('Preparing My Day...');
+    const createdStories = [];
+    const uploadedItemIds = [];
     try {
-      const createdStories = [];
-      for (const item of draftItems) {
+      for (const [index, item] of draftItems.entries()) {
+        setStoryUploadLabel(`Uploading ${index + 1} of ${draftItems.length}...`);
         const uploadFile = item.fileType === 'image'
           ? await optimizeImageFile(await applyImageEdits(item.file, item.edit), { maxDimension: 1600, quality: 0.86, minBytes: 600 * 1024 })
           : item.file;
@@ -714,17 +747,36 @@ export default function Dashboard() {
         formData.append('media', uploadFile);
         formData.append('privacy', storyDraft.privacy || 'public');
         formData.append('caption', String(storyDraft.caption || '').trim());
-        const res = await api.post('/stories', formData);
+        const res = await api.post('/stories', formData, { timeout: STORY_UPLOAD_TIMEOUT_MS });
         createdStories.push(res.data);
+        uploadedItemIds.push(item.id);
       }
       setActiveStory(createdStories[createdStories.length - 1]);
       window.dispatchEvent(new CustomEvent('storiesUpdated'));
       toast.success(draftItems.length > 1 ? `${draftItems.length} My Day updates posted` : 'My Day posted');
-      closeStoryDraft();
+      closeStoryDraft({ force: true });
     } catch (err) {
-      toast.error(err.response?.data?.msg || 'My Day upload failed');
+      if (createdStories.length) {
+        const uploadedIds = new Set(uploadedItemIds);
+        setActiveStory(createdStories[createdStories.length - 1]);
+        window.dispatchEvent(new CustomEvent('storiesUpdated'));
+        setStoryDraft(prev => {
+          const items = getStoryDraftItems(prev);
+          items
+            .filter(item => uploadedIds.has(item.id))
+            .forEach(item => item.previewUrl && URL.revokeObjectURL(item.previewUrl));
+          const remainingItems = items.filter(item => !uploadedIds.has(item.id));
+          if (!remainingItems.length) return null;
+          return { ...prev, items: remainingItems, activeIndex: 0 };
+        });
+      }
+      const completedMessage = createdStories.length
+        ? `${createdStories.length} My Day update${createdStories.length === 1 ? '' : 's'} posted. `
+        : '';
+      toast.error(`${completedMessage}${getStoryUploadError(err)}`);
     } finally {
       setStoryUploading(false);
+      setStoryUploadLabel('');
     }
   };
 
@@ -1101,7 +1153,9 @@ export default function Dashboard() {
                   className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#07036f] px-4 py-3 text-sm font-black text-white disabled:opacity-60"
                 >
                   {storyUploading ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />}
-                  {storyDraftItems.length > 1 ? `Post ${storyDraftItems.length} stories` : 'Post story'}
+                  {storyUploading
+                    ? (storyUploadLabel || 'Posting My Day...')
+                    : (storyDraftItems.length > 1 ? `Post ${storyDraftItems.length} stories` : 'Post story')}
                 </button>
               </div>
             </div>

@@ -876,6 +876,7 @@ export default function Messages() {
   const pendingConversationScrollTopRef = useRef(0);
   const messageThreadRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const composerFooterRef = useRef(null);
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
   const videoInputRef = useRef(null);
@@ -1280,6 +1281,101 @@ export default function Messages() {
     requestAnimationFrame(scrollThreadToBottomNow);
     if (typeof window !== 'undefined') window.setTimeout(scrollThreadToBottomNow, 80);
   }, [scrollThreadToBottomNow, selectedUserId]);
+
+  // Some mobile browsers leave the layout viewport at its full height while
+  // the software keyboard covers the lower part of the screen.  The composer
+  // then still receives text, but the person cannot see what they are typing.
+  // Keep the chat shell tied to VisualViewport while a conversation is open so
+  // the input stays immediately above the keyboard on both web and Capacitor.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !hasOpenConversation || !isMobileMessagesViewport()) return undefined;
+
+    const root = document.documentElement;
+    const previousHeight = root.style.getPropertyValue('--syncrova-message-visual-height');
+    let frame = 0;
+    let focusTimer = 0;
+    let baselineHeight = Math.round(window.visualViewport?.height || window.innerHeight || 0);
+    let baselineWidth = Math.round(window.visualViewport?.width || window.innerWidth || 0);
+
+    const isComposerElement = (element) => Boolean(
+      element?.matches?.('.message-composer-input, .group-message-composer-input input')
+    );
+
+    const syncViewport = () => {
+      frame = 0;
+      const viewport = window.visualViewport;
+      const height = Math.round(viewport?.height || window.innerHeight || 0);
+      const width = Math.round(viewport?.width || window.innerWidth || 0);
+      if (!height) return;
+
+      // A rotation creates a genuinely shorter viewport. Treat that as the new
+      // baseline instead of mistaking it for a keyboard opening.
+      if (Math.abs(width - baselineWidth) > 40) {
+        baselineWidth = width;
+        baselineHeight = height;
+      } else if (!isComposerElement(document.activeElement) || height >= baselineHeight - 80) {
+        baselineHeight = Math.max(baselineHeight, height);
+      }
+
+      const composerFocused = isComposerElement(document.activeElement);
+      const keyboardOpen = composerFocused && baselineHeight - height > 96;
+
+      root.style.setProperty('--syncrova-message-visual-height', `${height}px`);
+      root.classList.add('syncrova-message-conversation-open');
+      root.classList.toggle('syncrova-message-composer-focused', composerFocused);
+      root.classList.toggle('syncrova-message-keyboard-open', keyboardOpen);
+
+      if (composerFocused) {
+        // Let the flex layout shrink first, then retain the latest message and
+        // the input in the visible part of the conversation.
+        requestAnimationFrame(() => {
+          scrollThreadToBottomNow();
+          composerFooterRef.current?.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
+        });
+      }
+    };
+
+    const scheduleSync = () => {
+      if (!frame) frame = window.requestAnimationFrame(syncViewport);
+    };
+
+    const handleFocusIn = (event) => {
+      if (!isComposerElement(event.target)) return;
+      scheduleSync();
+      window.clearTimeout(focusTimer);
+      // Keyboard animations commonly report an intermediate viewport first.
+      focusTimer = window.setTimeout(scheduleSync, 180);
+    };
+
+    const handleFocusOut = () => {
+      window.clearTimeout(focusTimer);
+      focusTimer = window.setTimeout(scheduleSync, 120);
+    };
+
+    scheduleSync();
+    window.addEventListener('resize', scheduleSync);
+    window.addEventListener('focusin', handleFocusIn);
+    window.addEventListener('focusout', handleFocusOut);
+    window.visualViewport?.addEventListener('resize', scheduleSync);
+    window.visualViewport?.addEventListener('scroll', scheduleSync);
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.clearTimeout(focusTimer);
+      window.removeEventListener('resize', scheduleSync);
+      window.removeEventListener('focusin', handleFocusIn);
+      window.removeEventListener('focusout', handleFocusOut);
+      window.visualViewport?.removeEventListener('resize', scheduleSync);
+      window.visualViewport?.removeEventListener('scroll', scheduleSync);
+      root.classList.remove(
+        'syncrova-message-conversation-open',
+        'syncrova-message-composer-focused',
+        'syncrova-message-keyboard-open'
+      );
+      if (previousHeight) root.style.setProperty('--syncrova-message-visual-height', previousHeight);
+      else root.style.removeProperty('--syncrova-message-visual-height');
+    };
+  }, [hasOpenConversation, scrollThreadToBottomNow]);
 
   const setComposerText = useCallback((value = '') => {
     composerTextRef.current = value;
@@ -6592,7 +6688,7 @@ export default function Messages() {
                 )}
               </div>
 
-              <footer className="message-composer-footer messages-clean-composer border-t border-gray-200/80 bg-white/95 p-2 dark:border-gray-800 dark:bg-gray-950/95 sm:p-3">
+              <footer ref={composerFooterRef} className="message-composer-footer messages-clean-composer border-t border-gray-200/80 bg-white/95 p-2 dark:border-gray-800 dark:bg-gray-950/95 sm:p-3">
                 {editingMessage && (
                     <div className="mb-2 flex items-center justify-between rounded-2xl border border-cyan-100 bg-cyan-50 px-3 py-2 dark:border-cyan-900/60 dark:bg-cyan-950/20">
                       <div className="min-w-0 text-sm">
@@ -6813,6 +6909,9 @@ export default function Messages() {
                     }}
                     placeholder="Aa"
                     className="message-composer-input"
+                    aria-label="Message"
+                    autoComplete="off"
+                    spellCheck
                     disabled={sending || recording}
                   />
                   <button

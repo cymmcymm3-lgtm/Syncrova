@@ -66,11 +66,21 @@ const formatMemberSince = (value?: string | number | Date): string => {
   return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 };
 
-function ProfileAvatar({ name, source }: { name?: string; source: string }) {
+function ProfileAvatar({
+  name,
+  source,
+  imageFailed,
+  onImageError
+}: {
+  name?: string;
+  source: string;
+  imageFailed?: boolean;
+  onImageError?: () => void;
+}) {
   return (
     <span className="profile-clean__avatar" aria-hidden="true">
-      {source ? (
-        <img src={source} alt="" onError={event => { event.currentTarget.style.display = 'none'; }} />
+      {source && !imageFailed ? (
+        <img src={source} alt="" onError={onImageError} />
       ) : (
         (name || 'U').charAt(0).toUpperCase()
       )}
@@ -113,6 +123,8 @@ export default function Profile() {
   const [changingPassword, setChangingPassword] = useState(false);
   const [showPasswords, setShowPasswords] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<PhotoPreview>(null);
+  const [failedAvatarSource, setFailedAvatarSource] = useState('');
+  const [failedCoverSource, setFailedCoverSource] = useState('');
 
   useEffect(() => {
     if (!profile) return;
@@ -281,20 +293,22 @@ export default function Profile() {
 
   const avatarSource = resolveMediaUrl(avatar || profile.avatar || '');
   const coverSource = coverPreview || resolveMediaUrl(coverPhoto || profile.coverPhoto || '');
+  const canShowAvatar = Boolean(avatarSource && failedAvatarSource !== avatarSource);
+  const canShowCover = Boolean(coverSource && failedCoverSource !== coverSource);
   const isDeveloper = Boolean(profile.isDeveloper);
 
   return (
     <div className="mobile-page profile-clean">
       <section className="profile-clean__hero">
         <div className="profile-clean__cover">
-          {coverSource ? (
+          {canShowCover ? (
             <button
               type="button"
               className="profile-clean__cover-preview"
               onClick={() => setPhotoPreview({ src: coverSource, alt: `${profile.name || 'Your'} cover photo` })}
               aria-label="View cover photo"
             >
-              <img src={coverSource} alt="" onError={event => { event.currentTarget.style.display = 'none'; }} />
+              <img src={coverSource} alt="" onError={() => setFailedCoverSource(coverSource)} />
               <span>View cover</span>
             </button>
           ) : <div className="profile-clean__cover-fallback" aria-hidden="true" />}
@@ -311,13 +325,18 @@ export default function Profile() {
               <button
                 type="button"
                 className="profile-clean__avatar-preview"
-                onClick={() => avatarSource && setPhotoPreview({ src: avatarSource, alt: `${profile.name || 'Your'} profile picture` })}
-                disabled={!avatarSource}
+                onClick={() => canShowAvatar && setPhotoPreview({ src: avatarSource, alt: `${profile.name || 'Your'} profile picture` })}
+                disabled={!canShowAvatar}
                 aria-label="View profile picture"
-                title={avatarSource ? 'View profile picture' : undefined}
+                title={canShowAvatar ? 'View profile picture' : undefined}
               >
-                <ProfileAvatar name={profile.name} source={avatarSource} />
-                {avatarSource && <span className="profile-clean__avatar-view-label">View</span>}
+                <ProfileAvatar
+                  name={profile.name}
+                  source={avatarSource}
+                  imageFailed={!canShowAvatar}
+                  onImageError={() => setFailedAvatarSource(avatarSource)}
+                />
+                {canShowAvatar && <span className="profile-clean__avatar-view-label">View</span>}
               </button>
             </DeveloperAvatarFrame>
             <label className="profile-clean__avatar-upload" title="Change profile photo">

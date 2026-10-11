@@ -132,6 +132,16 @@ const getNotificationGroupKey = (notification: AppNotification = {}) => {
   return 'activity';
 };
 
+// Story replies and reactions are deliberately stored as message/reaction
+// notifications so the attention badge can stay compact. The My Day filter
+// still needs to find them, otherwise it only shows legacy `story` events.
+const isMyDayNotification = (notification: AppNotification = {}) => {
+  const type = String(notification.type || '').toLowerCase();
+  if (type === 'story' || getEntityId(notification.meta?.storyId)) return true;
+  const text = `${notification.title || ''} ${notification.body || ''}`.toLowerCase();
+  return text.includes('my day');
+};
+
 type NotificationAttentionSummary = {
   messages: number;
   activity: number;
@@ -294,7 +304,11 @@ export default function NotificationsPage() {
     const query = search.trim().toLowerCase();
     return notifications.filter(item => {
       const filterMatch = filter === 'all'
-        || (filter === 'unread' ? !item.read : (item.type === filter || getNotificationGroupKey(item) === filter));
+        || (filter === 'unread'
+          ? !item.read
+          : (filter === 'story'
+            ? isMyDayNotification(item)
+            : (item.type === filter || getNotificationGroupKey(item) === filter)));
       const textMatch = !query
         || item.title?.toLowerCase().includes(query)
         || item.body?.toLowerCase().includes(query)
@@ -330,9 +344,17 @@ export default function NotificationsPage() {
   const openNotification = async (notification) => {
     const id = getEntityId(notification);
     if (!notification.read && id) {
+      // Keep the interface responsive, but do not leave an alert looking read
+      // when a weak connection rejected the update. This matters most on
+      // mobile where opening an alert immediately navigates away from the
+      // notification center.
       api.put(`/notifications/${id}/read`)
         .then(() => refreshUnreadSummary())
-        .catch(() => {});
+        .catch(() => {
+          setNotifications(prev => prev.map(item => (
+            getEntityId(item) === id ? { ...item, read: false } : item
+          )));
+        });
       setNotifications(prev => prev.map(item => getEntityId(item) === id ? { ...item, read: true } : item));
     }
     if (notification.href && !isRetiredMarketplaceNotification(notification)) navigate(notification.href);
@@ -349,7 +371,19 @@ export default function NotificationsPage() {
     setNotifications(prev => prev.map(item => (
       unreadSet.has(getEntityId(item)) ? { ...item, read: true } : item
     )));
-    await Promise.allSettled(unreadIds.map(id => api.put(`/notifications/${id}/read`)));
+
+    const results = await Promise.allSettled(unreadIds.map(id => api.put(`/notifications/${id}/read`)));
+    const failedIds = results
+      .map((result, index) => result.status === 'rejected' ? unreadIds[index] : '')
+      .filter(Boolean);
+
+    if (failedIds.length) {
+      const failedSet = new Set(failedIds);
+      setNotifications(prev => prev.map(item => (
+        failedSet.has(getEntityId(item)) ? { ...item, read: false } : item
+      )));
+      toast.error('Some notifications could not be marked as read');
+    }
     await refreshUnreadSummary();
   };
 
@@ -386,15 +420,28 @@ export default function NotificationsPage() {
     const ids = thread.items.map(getEntityId).filter(Boolean);
     if (!ids.length) return;
     try {
-      await Promise.allSettled(ids.map(id => api.delete(`/notifications/${id}`)));
-      const idSet = new Set(ids);
-      setNotifications(prev => prev.filter(item => !idSet.has(getEntityId(item))));
+      const results = await Promise.allSettled(ids.map(id => api.delete(`/notifications/${id}`)));
+      const deletedIds = results
+        .map((result, index) => result.status === 'fulfilled' ? ids[index] : '')
+        .filter(Boolean);
+
+      if (!deletedIds.length) {
+        toast.error('Could not delete this notification group');
+        return;
+      }
+
+      const deletedSet = new Set(deletedIds);
+      setNotifications(prev => prev.filter(item => !deletedSet.has(getEntityId(item))));
       await refreshUnreadSummary();
       setExpandedMessageThreads(prev => {
         const next = new Set(prev);
-        next.delete(thread.key);
+        if (deletedIds.length === ids.length) next.delete(thread.key);
         return next;
       });
+
+      if (deletedIds.length !== ids.length) {
+        toast.error('Some notifications could not be deleted');
+      }
     } catch (err) {
       toast.error(err.response?.data?.msg || 'Delete failed');
     }

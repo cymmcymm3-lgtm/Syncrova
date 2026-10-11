@@ -637,3 +637,76 @@
     min-width: 2.25rem !important;
   }
 }
+
+/*
+ * Keep the message composer readable and keyboard-safe.  Mobile Safari and
+ * several Android WebViews can keep the document at its original height when
+ * the soft keyboard opens, which used to cover the field while someone typed.
+ * Messages.tsx updates --syncrova-message-visual-height from VisualViewport
+ * only for an open mobile conversation.
+ */
+.messages-clean-shell .message-composer-input {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a;
+  caret-color: #1877f2;
+  opacity: 1;
+}
+
+.messages-clean-shell .message-composer-input::placeholder {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b;
+  opacity: 1;
+}
+
+.dark .messages-clean-shell .message-composer-input {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc;
+  caret-color: #60a5fa;
+}
+
+.dark .messages-clean-shell .message-composer-input::placeholder {
+  color: #94a3b8 !important;
+  -webkit-text-fill-color: #94a3b8;
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  html.syncrova-message-conversation-open .portal-shell,
+  html.syncrova-message-conversation-open .layout-content-frame,
+  html.syncrova-message-conversation-open .app-main--mobile-chat-open,
+  html.syncrova-message-conversation-open .app-main--mobile-chat-open > .app-page-content {
+    height: var(--syncrova-message-visual-height, 100dvh) !important;
+    min-height: 0 !important;
+    max-height: var(--syncrova-message-visual-height, 100dvh) !important;
+  }
+
+  html.syncrova-message-conversation-open .messages-pro-shell.messages-clean-shell.mobile-messenger-shell.mobile-chat-selected,
+  html.syncrova-message-conversation-open .messages-pro-shell.messages-clean-shell.mobile-messenger-shell.mobile-chat-selected > .messages-clean-layout,
+  html.syncrova-message-conversation-open .messages-pro-shell.messages-clean-shell.mobile-messenger-shell.mobile-chat-selected .messages-full-conversation-panel {
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+  }
+
+  html.syncrova-message-conversation-open .messages-pro-shell.messages-clean-shell.mobile-messenger-shell .mobile-message-thread {
+    min-height: 0 !important;
+    scroll-padding-bottom: calc(8.5rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  html.syncrova-message-conversation-open .messages-pro-shell.messages-clean-shell.mobile-messenger-shell .message-composer-footer,
+  html.syncrova-message-conversation-open .messages-pro-shell.messages-clean-shell.mobile-messenger-shell .group-message-composer-footer {
+    position: relative;
+    z-index: 6;
+    flex: 0 0 auto;
+  }
+
+  /* When space is tight, the optional in-chat search yields before the field
+     does.  It returns as soon as the keyboard is dismissed. */
+  html.syncrova-message-keyboard-open .messages-pro-shell.messages-clean-shell.mobile-messenger-shell .mobile-chat-search-bar {
+    display: none !important;
+  }
+
+  html.syncrova-message-keyboard-open .messages-pro-shell.messages-clean-shell.mobile-messenger-shell .messages-clean-thread-header {
+    min-height: 3.55rem !important;
+    padding-block: 0.45rem !important;
+  }
+}
