@@ -1292,10 +1292,53 @@ export default function Messages() {
 
     const root = document.documentElement;
     const previousHeight = root.style.getPropertyValue('--syncrova-message-visual-height');
+    const previousOffset = root.style.getPropertyValue('--syncrova-message-visual-offset');
+    const previousKeyboardInset = root.style.getPropertyValue('--syncrova-message-keyboard-inset');
     let frame = 0;
-    let focusTimer = 0;
-    let baselineHeight = Math.round(window.visualViewport?.height || window.innerHeight || 0);
-    let baselineWidth = Math.round(window.visualViewport?.width || window.innerWidth || 0);
+    const focusTimers = [];
+    const virtualKeyboard = window.navigator?.virtualKeyboard;
+    const previousVirtualKeyboardMode = virtualKeyboard?.overlaysContent;
+
+    // Chrome-based Android WebViews can expose the keyboard as an overlay and
+    // leave both window.innerHeight and VisualViewport unchanged. Opt into the
+    // geometry API when it exists so its bounding rect can drive the exact
+    // visible chat height. Older browsers simply keep using VisualViewport.
+    try {
+      if (virtualKeyboard && 'overlaysContent' in virtualKeyboard) {
+        virtualKeyboard.overlaysContent = true;
+      }
+    } catch {
+      // The API is optional and some embedded browsers expose it read-only.
+    }
+
+    const getViewportMetrics = () => {
+      const viewport = window.visualViewport;
+      const layoutHeight = Math.round(window.innerHeight || document.documentElement.clientHeight || 0);
+      const visualHeight = Math.round(viewport?.height || layoutHeight || 0);
+      const visualWidth = Math.round(viewport?.width || window.innerWidth || 0);
+      const offsetTop = Math.max(0, Math.round(viewport?.offsetTop || 0));
+      const keyboardRect = virtualKeyboard?.boundingRect;
+      const virtualKeyboardInset = keyboardRect?.height > 0
+        ? Math.max(0, Math.round(layoutHeight - keyboardRect.y))
+        : 0;
+      const usableHeight = virtualKeyboardInset
+        ? Math.max(0, layoutHeight - virtualKeyboardInset)
+        : visualHeight;
+
+      return {
+        // A few Android embedded browsers report a visual viewport taller than
+        // the layout viewport while their controls are animating.  Never let
+        // that grow the chat beyond the viewport that can actually be seen.
+        height: layoutHeight ? Math.min(usableHeight || layoutHeight, layoutHeight) : usableHeight,
+        width: visualWidth,
+        offsetTop,
+        layoutHeight,
+        virtualKeyboardInset
+      };
+    };
+    const initialViewport = getViewportMetrics();
+    let baselineHeight = initialViewport.height;
+    let baselineWidth = initialViewport.width;
 
     const isComposerElement = (element) => Boolean(
       element?.matches?.('.message-composer-input, .group-message-composer-input input')
@@ -1303,9 +1346,7 @@ export default function Messages() {
 
     const syncViewport = () => {
       frame = 0;
-      const viewport = window.visualViewport;
-      const height = Math.round(viewport?.height || window.innerHeight || 0);
-      const width = Math.round(viewport?.width || window.innerWidth || 0);
+      const { height, width, offsetTop, layoutHeight, virtualKeyboardInset } = getViewportMetrics();
       if (!height) return;
 
       // A rotation creates a genuinely shorter viewport. Treat that as the new
@@ -1318,9 +1359,12 @@ export default function Messages() {
       }
 
       const composerFocused = isComposerElement(document.activeElement);
-      const keyboardOpen = composerFocused && baselineHeight - height > 96;
+      const obscuredHeight = Math.max(virtualKeyboardInset, (layoutHeight || baselineHeight) - (height + offsetTop));
+      const keyboardOpen = composerFocused && (baselineHeight - height > 72 || obscuredHeight > 72);
 
       root.style.setProperty('--syncrova-message-visual-height', `${height}px`);
+      root.style.setProperty('--syncrova-message-visual-offset', `${offsetTop}px`);
+      root.style.setProperty('--syncrova-message-keyboard-inset', `${obscuredHeight}px`);
       root.classList.add('syncrova-message-conversation-open');
       root.classList.toggle('syncrova-message-composer-focused', composerFocused);
       root.classList.toggle('syncrova-message-keyboard-open', keyboardOpen);
@@ -1342,31 +1386,46 @@ export default function Messages() {
     const handleFocusIn = (event) => {
       if (!isComposerElement(event.target)) return;
       scheduleSync();
-      window.clearTimeout(focusTimer);
-      // Keyboard animations commonly report an intermediate viewport first.
-      focusTimer = window.setTimeout(scheduleSync, 180);
+      // Embedded Android browsers can report the new viewport late (after the
+      // keyboard is already covering the field).  Sample the entire keyboard
+      // animation instead of relying on one resize event.
+      focusTimers.splice(0).forEach(timer => window.clearTimeout(timer));
+      [0, 80, 180, 360, 720].forEach(delay => {
+        focusTimers.push(window.setTimeout(scheduleSync, delay));
+      });
     };
 
     const handleFocusOut = () => {
-      window.clearTimeout(focusTimer);
-      focusTimer = window.setTimeout(scheduleSync, 120);
+      focusTimers.splice(0).forEach(timer => window.clearTimeout(timer));
+      focusTimers.push(window.setTimeout(scheduleSync, 120));
     };
 
     scheduleSync();
     window.addEventListener('resize', scheduleSync);
+    window.addEventListener('orientationchange', scheduleSync);
     window.addEventListener('focusin', handleFocusIn);
     window.addEventListener('focusout', handleFocusOut);
     window.visualViewport?.addEventListener('resize', scheduleSync);
     window.visualViewport?.addEventListener('scroll', scheduleSync);
+    virtualKeyboard?.addEventListener?.('geometrychange', scheduleSync);
 
     return () => {
       if (frame) window.cancelAnimationFrame(frame);
-      window.clearTimeout(focusTimer);
+      focusTimers.splice(0).forEach(timer => window.clearTimeout(timer));
       window.removeEventListener('resize', scheduleSync);
+      window.removeEventListener('orientationchange', scheduleSync);
       window.removeEventListener('focusin', handleFocusIn);
       window.removeEventListener('focusout', handleFocusOut);
       window.visualViewport?.removeEventListener('resize', scheduleSync);
       window.visualViewport?.removeEventListener('scroll', scheduleSync);
+      virtualKeyboard?.removeEventListener?.('geometrychange', scheduleSync);
+      try {
+        if (virtualKeyboard && typeof previousVirtualKeyboardMode === 'boolean') {
+          virtualKeyboard.overlaysContent = previousVirtualKeyboardMode;
+        }
+      } catch {
+        // Best-effort restoration for an optional browser API.
+      }
       root.classList.remove(
         'syncrova-message-conversation-open',
         'syncrova-message-composer-focused',
@@ -1374,6 +1433,10 @@ export default function Messages() {
       );
       if (previousHeight) root.style.setProperty('--syncrova-message-visual-height', previousHeight);
       else root.style.removeProperty('--syncrova-message-visual-height');
+      if (previousOffset) root.style.setProperty('--syncrova-message-visual-offset', previousOffset);
+      else root.style.removeProperty('--syncrova-message-visual-offset');
+      if (previousKeyboardInset) root.style.setProperty('--syncrova-message-keyboard-inset', previousKeyboardInset);
+      else root.style.removeProperty('--syncrova-message-keyboard-inset');
     };
   }, [hasOpenConversation, scrollThreadToBottomNow]);
 

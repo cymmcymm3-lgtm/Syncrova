@@ -322,7 +322,7 @@ function NativeAppEnvironment() {
     if (isNative && viewport) {
       viewport.setAttribute(
         'content',
-        'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover'
+        'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content'
       );
     }
 

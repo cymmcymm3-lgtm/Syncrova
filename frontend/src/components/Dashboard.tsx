@@ -537,6 +537,12 @@ export default function Dashboard() {
   const storyDraftRef = useRef(null);
 
   const currentUserId = getEntityId(user);
+  // A regular browser (including Facebook's in-app browser) needs a real,
+  // directly-tapped file input. Some Android WebViews ignore `.click()` when
+  // the target input is `display: none`, so the web story card renders an
+  // invisible input on top of the card below. Native Android still uses the
+  // richer Media Library sheet.
+  const nativeStoryPickerAvailable = isNativeMediaLibraryAvailable();
 
   useEffect(() => {
     storyDraftRef.current = storyDraft;
@@ -646,12 +652,20 @@ export default function Dashboard() {
   };
 
   const openStoryPicker = () => {
-    if (isNativeMediaLibraryAvailable()) {
+    if (nativeStoryPickerAvailable) {
       setStoryMediaLibraryOpen(true);
       return;
     }
 
-    storyInputRef.current?.click();
+    const input = storyInputRef.current;
+    if (!input) {
+      toast.error('Media picker is not ready. Please reload and try again.');
+      return;
+    }
+
+    // This fallback is mainly for keyboard activation. Pointer/touch input on
+    // the web card goes directly to the visible-size, transparent input below.
+    input.click();
   };
 
   const createStoryDraftFromFiles = (incomingFiles = []) => {
@@ -844,50 +858,96 @@ export default function Dashboard() {
             className="dashboard-story-rail flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {/* ===== CREATE STORY CARD - FACEBOOK / META STYLE ===== */}
-            <button
-              type="button"
-              onClick={openStoryPicker}
-              disabled={storyUploading}
-              className="dashboard-create-story-tile group relative aspect-[2/3] h-[13rem] w-[8rem] shrink-0 overflow-hidden rounded-2xl shadow-lg ring-1 ring-gray-200 transition active:scale-[0.97] disabled:opacity-70 dark:ring-slate-700"
-            >
-              {/* Top: profile picture as background */}
-              <div className="dashboard-create-story-cover absolute inset-x-0 top-0 h-[68%] overflow-hidden bg-blue-100">
-                <div className="dashboard-create-story-fallback flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-blue-700 text-3xl font-black text-white">
-                  {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-                </div>
-                {userAvatarUrl && (
-                  <img
-                    src={userAvatarUrl}
-                    alt="Your story background"
-                    decoding="async"
-                      sizes="128px"
-                    className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                    onError={(event) => { event.currentTarget.style.display = 'none'; }}
-                  />
-                )}
-              </div>
-
-              {/* Bottom label area keeps the create-story action readable. */}
-              <div className="dashboard-create-story-caption-surface absolute inset-x-0 bottom-0 h-[32%] bg-white dark:bg-ui-elevated" />
-
-              {/* Plus badge straddling the divider */}
-              <div className="dashboard-create-story-plus-wrap absolute bottom-[26%] left-1/2 -translate-x-1/2">
-                <div
-                  className="dashboard-create-story-plus grid h-9 w-9 place-items-center rounded-full bg-ui-accent text-white shadow-md ring-4 ring-white dark:ring-ui-elevated"
-                >
-                  {storyUploading ? (
-                    <Loader2 size={16} className="animate-spin text-white" />
-                  ) : (
-                    <Plus size={16} strokeWidth={3} className="text-white" />
+            {nativeStoryPickerAvailable ? (
+              <button
+                type="button"
+                onClick={openStoryPicker}
+                disabled={storyUploading}
+                className="dashboard-create-story-tile group relative aspect-[2/3] h-[13rem] w-[8rem] shrink-0 overflow-hidden rounded-2xl shadow-lg ring-1 ring-gray-200 transition active:scale-[0.97] disabled:opacity-70 dark:ring-slate-700"
+              >
+                {/* Top: profile picture as background */}
+                <div className="dashboard-create-story-cover absolute inset-x-0 top-0 h-[68%] overflow-hidden bg-blue-100">
+                  <div className="dashboard-create-story-fallback flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-blue-700 text-3xl font-black text-white">
+                    {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
+                  {userAvatarUrl && (
+                    <img
+                      src={userAvatarUrl}
+                      alt="Your story background"
+                      decoding="async"
+                        sizes="128px"
+                      className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      onError={(event) => { event.currentTarget.style.display = 'none'; }}
+                    />
                   )}
                 </div>
-              </div>
 
-              {/* Create story text */}
-              <span className="dashboard-create-story-text absolute inset-x-0 bottom-2.5 text-center text-[13px] font-black text-slate-900 dark:text-white">
-                Create story
-              </span>
-            </button>
+                {/* Bottom label area keeps the create-story action readable. */}
+                <div className="dashboard-create-story-caption-surface absolute inset-x-0 bottom-0 h-[32%] bg-white dark:bg-ui-elevated" />
+
+                {/* Plus badge straddling the divider */}
+                <div className="dashboard-create-story-plus-wrap absolute bottom-[26%] left-1/2 -translate-x-1/2">
+                  <div
+                    className="dashboard-create-story-plus grid h-9 w-9 place-items-center rounded-full bg-ui-accent text-white shadow-md ring-4 ring-white dark:ring-ui-elevated"
+                  >
+                    {storyUploading ? (
+                      <Loader2 size={16} className="animate-spin text-white" />
+                    ) : (
+                      <Plus size={16} strokeWidth={3} className="text-white" />
+                    )}
+                  </div>
+                </div>
+
+                {/* Create story text */}
+                <span className="dashboard-create-story-text absolute inset-x-0 bottom-2.5 text-center text-[13px] font-black text-slate-900 dark:text-white">
+                  Create story
+                </span>
+              </button>
+            ) : (
+              <label
+                className={`dashboard-create-story-tile group relative block aspect-[2/3] h-[13rem] w-[8rem] shrink-0 overflow-hidden rounded-2xl shadow-lg ring-1 ring-gray-200 transition active:scale-[0.97] dark:ring-slate-700 ${storyUploading ? 'pointer-events-none opacity-70' : 'cursor-pointer'}`}
+              >
+                {/* Do not use display:none here: Facebook/Android WebViews can
+                    reject a programmatic click on a hidden picker. */}
+                <input
+                  ref={storyInputRef}
+                  type="file"
+                  name="story-media"
+                  accept="image/*,video/*"
+                  multiple
+                  disabled={storyUploading}
+                  className="absolute inset-0 z-20 block h-full w-full cursor-pointer opacity-0"
+                  aria-label="Choose a photo or video for your My Day"
+                  onChange={uploadStoryFromDashboard}
+                />
+                {/* Top: profile picture as background */}
+                <div className="dashboard-create-story-cover absolute inset-x-0 top-0 h-[68%] overflow-hidden bg-blue-100">
+                  <div className="dashboard-create-story-fallback flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-blue-700 text-3xl font-black text-white">
+                    {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
+                  {userAvatarUrl && (
+                    <img
+                      src={userAvatarUrl}
+                      alt="Your story background"
+                      decoding="async"
+                        sizes="128px"
+                      className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      onError={(event) => { event.currentTarget.style.display = 'none'; }}
+                    />
+                  )}
+                </div>
+
+                <div className="dashboard-create-story-caption-surface absolute inset-x-0 bottom-0 h-[32%] bg-white dark:bg-ui-elevated" />
+                <div className="dashboard-create-story-plus-wrap absolute bottom-[26%] left-1/2 -translate-x-1/2">
+                  <div className="dashboard-create-story-plus grid h-9 w-9 place-items-center rounded-full bg-ui-accent text-white shadow-md ring-4 ring-white dark:ring-ui-elevated">
+                    {storyUploading ? <Loader2 size={16} className="animate-spin text-white" /> : <Plus size={16} strokeWidth={3} className="text-white" />}
+                  </div>
+                </div>
+                <span className="dashboard-create-story-text absolute inset-x-0 bottom-2.5 text-center text-[13px] font-black text-slate-900 dark:text-white">
+                  Create story
+                </span>
+              </label>
+            )}
 
             {/* ===== USERS' STORIES ===== */}
             {storyRail.map(group => {
@@ -969,16 +1029,6 @@ export default function Dashboard() {
           )}
         </div>
       </>
-    )}
-    {mobile && (
-      <input
-        ref={storyInputRef}
-        type="file"
-        accept="image/*,video/*"
-        multiple
-        className="hidden"
-        onChange={uploadStoryFromDashboard}
-      />
     )}
   </section>
 );
@@ -1145,7 +1195,7 @@ export default function Dashboard() {
                   </select>
                 </label>
               </div>
-<div className="border-t border-slate-100 p-4 dark:border-slate-800">
+              <div className="story-draft-submit-bar border-t border-slate-100 p-4 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={publishStoryDraft}

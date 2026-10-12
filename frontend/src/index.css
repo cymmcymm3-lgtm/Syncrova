@@ -5378,23 +5378,48 @@ html.syncrova-frame-unstable :where(
     width: 100%;
     height: 100svh;
     max-height: 100svh;
-    overflow-y: auto;
+    /* The stage, settings and submit button need to share one phone-height
+       layout. Let only the settings body scroll; otherwise the Post button
+       can land below the first visible viewport on Android. */
+    overflow: hidden;
     border-radius: 0;
   }
 
   .story-draft-side {
     width: 100%;
     order: 2;
+    min-height: 0;
+    flex: 1 1 0%;
+    overflow: hidden;
+  }
+
+  .story-draft-side > .flex-1 {
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .story-draft-stage {
     order: 1;
-    min-height: 48svh;
-    padding: 1rem;
+    /* The original tall preview pushed the caption/privacy controls and the
+     * Post button below the fold on compact Android browsers. Keep a useful
+     * preview while leaving the submit action in the first mobile viewport. */
+    flex: 0 0 min(33svh, 17rem);
+    min-height: min(33svh, 17rem);
+    padding: 0.7rem;
   }
 
   .story-draft-preview {
-    min-height: 44svh;
+    min-height: 0;
+  }
+
+  .story-draft-submit-bar {
+    position: relative;
+    z-index: 3;
+    flex: 0 0 auto;
+    background: inherit;
+    box-shadow: 0 -10px 22px rgba(15, 23, 42, 0.08);
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
 
