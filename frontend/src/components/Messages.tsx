@@ -1283,33 +1283,20 @@ export default function Messages() {
   }, [scrollThreadToBottomNow, selectedUserId]);
 
   // Some mobile browsers leave the layout viewport at its full height while
-  // the software keyboard covers the lower part of the screen.  The composer
-  // then still receives text, but the person cannot see what they are typing.
-  // Keep the chat shell tied to VisualViewport while a conversation is open so
-  // the input stays immediately above the keyboard on both web and Capacitor.
+  // the software keyboard covers the lower part of the screen. Keep the
+  // conversation in normal document flow and only use the visual viewport as
+  // a sizing/fallback signal. Moving the *whole* chat to fixed positioning
+  // fights Android/Facebook's own keyboard pan and makes the thread jump.
   useEffect(() => {
     if (typeof window === 'undefined' || !hasOpenConversation || !isMobileMessagesViewport()) return undefined;
 
     const root = document.documentElement;
     const previousHeight = root.style.getPropertyValue('--syncrova-message-visual-height');
-    const previousOffset = root.style.getPropertyValue('--syncrova-message-visual-offset');
-    const previousKeyboardInset = root.style.getPropertyValue('--syncrova-message-keyboard-inset');
+    const previousLift = root.style.getPropertyValue('--syncrova-message-composer-lift');
     let frame = 0;
     const focusTimers = [];
+    let nativeRevealRequested = false;
     const virtualKeyboard = window.navigator?.virtualKeyboard;
-    const previousVirtualKeyboardMode = virtualKeyboard?.overlaysContent;
-
-    // Chrome-based Android WebViews can expose the keyboard as an overlay and
-    // leave both window.innerHeight and VisualViewport unchanged. Opt into the
-    // geometry API when it exists so its bounding rect can drive the exact
-    // visible chat height. Older browsers simply keep using VisualViewport.
-    try {
-      if (virtualKeyboard && 'overlaysContent' in virtualKeyboard) {
-        virtualKeyboard.overlaysContent = true;
-      }
-    } catch {
-      // The API is optional and some embedded browsers expose it read-only.
-    }
 
     const getViewportMetrics = () => {
       const viewport = window.visualViewport;
@@ -1321,15 +1308,18 @@ export default function Messages() {
       const virtualKeyboardInset = keyboardRect?.height > 0
         ? Math.max(0, Math.round(layoutHeight - keyboardRect.y))
         : 0;
-      const usableHeight = virtualKeyboardInset
+      const visibleHeight = virtualKeyboardInset
         ? Math.max(0, layoutHeight - virtualKeyboardInset)
         : visualHeight;
+      const height = layoutHeight
+        ? Math.min(visibleHeight || layoutHeight, layoutHeight)
+        : visibleHeight;
 
       return {
         // A few Android embedded browsers report a visual viewport taller than
-        // the layout viewport while their controls are animating.  Never let
-        // that grow the chat beyond the viewport that can actually be seen.
-        height: layoutHeight ? Math.min(usableHeight || layoutHeight, layoutHeight) : usableHeight,
+        // the layout viewport while their controls animate. Never let that
+        // grow the chat beyond the pixels that can actually be seen.
+        height,
         width: visualWidth,
         offsetTop,
         layoutHeight,
@@ -1363,39 +1353,65 @@ export default function Messages() {
       const keyboardOpen = composerFocused && (baselineHeight - height > 72 || obscuredHeight > 72);
 
       root.style.setProperty('--syncrova-message-visual-height', `${height}px`);
-      root.style.setProperty('--syncrova-message-visual-offset', `${offsetTop}px`);
-      root.style.setProperty('--syncrova-message-keyboard-inset', `${obscuredHeight}px`);
       root.classList.add('syncrova-message-conversation-open');
       root.classList.toggle('syncrova-message-composer-focused', composerFocused);
       root.classList.toggle('syncrova-message-keyboard-open', keyboardOpen);
 
-      if (composerFocused) {
-        // Let the flex layout shrink first, then retain the latest message and
-        // the input in the visible part of the conversation.
-        requestAnimationFrame(() => {
-          scrollThreadToBottomNow();
-          composerFooterRef.current?.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
-        });
-      }
+      // Usually the flex shell above resizes with the visual viewport. If an
+      // embedded browser leaves an ancestor at the old height, lift only the
+      // composer by the measured overlap. This preserves the thread's scroll
+      // position and avoids relocating the entire conversation while typing.
+      const footer = composerFooterRef.current
+        || document.querySelector('.messages-pro-shell.mobile-messenger-shell .group-message-composer-footer');
+      const previousLiftAmount = Number.parseFloat(root.style.getPropertyValue('--syncrova-message-composer-lift')) || 0;
+      const visibleBottom = Math.min(layoutHeight || height, offsetTop + height);
+      const footerBottom = footer ? footer.getBoundingClientRect().bottom + previousLiftAmount : 0;
+      const composerLift = composerFocused && footerBottom > visibleBottom + 2
+        ? Math.ceil(footerBottom - visibleBottom + 8)
+        : 0;
+      root.style.setProperty('--syncrova-message-composer-lift', `${composerLift}px`);
+      root.classList.toggle('syncrova-message-composer-lifted', composerLift > 0);
     };
 
     const scheduleSync = () => {
       if (!frame) frame = window.requestAnimationFrame(syncViewport);
     };
 
+    const requestNativeComposerReveal = () => {
+      if (nativeRevealRequested || !isComposerElement(document.activeElement)) return;
+      const { height, virtualKeyboardInset } = getViewportMetrics();
+      const keyboardWasReported = baselineHeight - height > 72 || virtualKeyboardInset > 72;
+      if (keyboardWasReported) return;
+
+      // A few embedded browsers do not expose either a VisualViewport resize
+      // or VirtualKeyboard geometry. Ask the browser once to reveal the
+      // focused input using its native keyboard-aware scroll behavior. This
+      // is intentionally a one-time fallback, never a viewport-event loop.
+      nativeRevealRequested = true;
+      inputRef.current?.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
+    };
+
     const handleFocusIn = (event) => {
       if (!isComposerElement(event.target)) return;
+      nativeRevealRequested = false;
       scheduleSync();
-      // Embedded Android browsers can report the new viewport late (after the
-      // keyboard is already covering the field).  Sample the entire keyboard
-      // animation instead of relying on one resize event.
+      // Embedded Android browsers can report the new viewport late. Recheck
+      // after their keyboard animation, but do not repeatedly force the
+      // thread to the bottom on every viewport event.
       focusTimers.splice(0).forEach(timer => window.clearTimeout(timer));
-      [0, 80, 180, 360, 720].forEach(delay => {
-        focusTimers.push(window.setTimeout(scheduleSync, delay));
+      [80, 260, 520].forEach((delay, index) => {
+        focusTimers.push(window.setTimeout(() => {
+          scheduleSync();
+          if (index === 0 && isComposerElement(document.activeElement)) {
+            scrollThreadToBottomNow();
+          }
+          if (index === 2) requestNativeComposerReveal();
+        }, delay));
       });
     };
 
     const handleFocusOut = () => {
+      nativeRevealRequested = false;
       focusTimers.splice(0).forEach(timer => window.clearTimeout(timer));
       focusTimers.push(window.setTimeout(scheduleSync, 120));
     };
@@ -1419,24 +1435,16 @@ export default function Messages() {
       window.visualViewport?.removeEventListener('resize', scheduleSync);
       window.visualViewport?.removeEventListener('scroll', scheduleSync);
       virtualKeyboard?.removeEventListener?.('geometrychange', scheduleSync);
-      try {
-        if (virtualKeyboard && typeof previousVirtualKeyboardMode === 'boolean') {
-          virtualKeyboard.overlaysContent = previousVirtualKeyboardMode;
-        }
-      } catch {
-        // Best-effort restoration for an optional browser API.
-      }
       root.classList.remove(
         'syncrova-message-conversation-open',
         'syncrova-message-composer-focused',
-        'syncrova-message-keyboard-open'
+        'syncrova-message-keyboard-open',
+        'syncrova-message-composer-lifted'
       );
       if (previousHeight) root.style.setProperty('--syncrova-message-visual-height', previousHeight);
       else root.style.removeProperty('--syncrova-message-visual-height');
-      if (previousOffset) root.style.setProperty('--syncrova-message-visual-offset', previousOffset);
-      else root.style.removeProperty('--syncrova-message-visual-offset');
-      if (previousKeyboardInset) root.style.setProperty('--syncrova-message-keyboard-inset', previousKeyboardInset);
-      else root.style.removeProperty('--syncrova-message-keyboard-inset');
+      if (previousLift) root.style.setProperty('--syncrova-message-composer-lift', previousLift);
+      else root.style.removeProperty('--syncrova-message-composer-lift');
     };
   }, [hasOpenConversation, scrollThreadToBottomNow]);
 
